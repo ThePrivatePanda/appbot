@@ -1,0 +1,27 @@
+Main: FOR SERVER
+    is_he_allowed_to_apply:
+        does_he_match_atleast_one_requirement:
+            is_server_accepting_any_applications:
+                (DMS)
+                general:
+                    tmod:
+                    bot_manager:
+                        dank_memer:
+                        karuta:
+
+
+Master:
+.gitignore
+README.md
+Main:
+    appbot.py
+    imports.py
+Server_Config:
+    categories
+    category_hierarchy
+    blacklists
+    question_files
+    requirements
+Backend:
+    active_apps
+    functions:
