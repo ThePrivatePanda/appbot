@@ -294,8 +294,13 @@ def meets_general_req(usrid):
         checkInFirst(get_role_ids(usrid), get_general_req())
 
 def can_apply_to_any(usrid):
-        for app in get_active():
-            checkInFirst(get_role_ids(usrid), get_reqs(app))
+    x = []
+    for app in get_active():
+        x.append(checkInFirst(get_role_ids(usrid), get_reqs(app)))
+    if True in x:
+        return True
+    else:
+        return False
 
 
 ##########################################################################
