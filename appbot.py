@@ -4,57 +4,112 @@ import discord
 import asyncio
 import os
 import sys
-from discord.errors import HTTPException, NotFound
+from discord.audit_logs import _transform_verification_level
+from discord.errors import Forbidden, HTTPException, NotFound
 from collections import Counter
 from discord.ext import commands
 from discord.ext.commands.core import check
 import config
-
-bot = commands.Bot(help_command=None, command_prefix="!!")
+def get_prefix():
+    with open(r"config/prefix.txt") as file:
+        return file.read()
+bot = commands.Bot(command_prefix=get_prefix())
+bot.remove_command('help')
 
 @bot.event
 async def on_ready():
     print("logged in")
     await bot.fetch_channel(843773991055654926).send("online")
+
+##########################################################################
+################################## Help ##################################
+################################# command ################################
+##########################################################################
+
+@bot.group(invoke_without_command=True)
+async def help(ctx):
+    em = discord.Embed(title="Help Page", description=f"use {get_prefix()}help <command> for a more detailed help on the command.")
+    em.add_field(
+        name="Admin Commands", 
+        description=("""
+            1) set_log_channel or (slc)\n
+            2) dump_questions\n
+            3) add_question\n
+            4) rem_question
+            5) set_app_channel\n
+            6) blacklist\n
+            7) whitelist\n
+            8) toggle\n
+            9) add_req\n
+            10) remove_req\n
+            11) write_hier\n
+            """))
+    em.add_field(name="Public Commands", description="1) raise_er\n2) apply")
+
 em = discord.Embed(title="Test Embed", description="Just ensuring i cant send messages and embeds here")
+
+async def log(content):
+    with open(r"config\log.txt", "a") as file:
+        file.write(content)
+    with open(r"config/logch.txt") as file:
+        x = int(file.read())
+    ch = bot.get_channel(x)
+    if ch != None:
+        ch.send(content)
+        return
+    else:
+        ch = bot.fetch_channel(x)
+        if ch != None:
+            ch.send(content)
+            return
+    return False
 
 def add_question(cat, ques):
     with open(f"questions\{cat}.txt", "a") as file:
-        file.write(ques)      
+        file.write(ques)
+    log(f"Added Question:\n{ques}\nin category {cat}")
 
 def remove_question(cat, ques):
     with open(f"questions\{cat}.txt", "a") as file:
         file_source = file.read()
         file.write(file_source.replace(f"{ques}", ""))
+    log(f"Removed Question:\n{ques}\nfrom category {cat}")
 
 def get_id_from_mention(mention):
     return int(''.join(x for x in mention if x.isdigit()))
 
-def write_log(chid):
+def write_log_channel(chid):
     with open(r"config/logch.txt", "w") as f:
         f.write(chid)
+    log(f"Set <#{chid}> as log channel")
 
 def write_applog(chid):
     with open(r"config/applog.txt", "w") as f:
         f.write(chid)
+    log(f"Set <#{chid}> to log applications")
 
 def write_blacklist_user(app, usrid):
     with open(r"bl\usr_blacklists.txt", "a") as f:
         f.write(f"{app}_{usrid}")
+    log(f"Blacklisted user {usrid} for app {app}")
 
 def write_blacklist_role(app, rlid):
     with open(r"b\rl_blacklists.txt", "a") as f:
         f.write(f"{app}_{rlid}")
+    log(f"Blacklisted role {rlid} for app {app}")
 
 def write_whitelist_user(app, usrid):
     with open(r"bl\usr_blacklists.txt", "r+") as f:
         file_source = f.read()
         f.write(file_source.replace(f"{app}_{usrid}", ""))
+    log(f"Whitelisted user {usrid} for app {app}")
+
 
 def write_whitelist_role(app, rlid):
     with open(r"bl\rl_blacklists.txt", "r+") as f:
         file_source = f.read()
         f.write(file_source.replace(f"{app}_{rlid}", ""))
+    log(f"Whitelisted role {rlid} for app {app}")
 
 @bot.command(name="set_log_channel", aliases = ["slc"])
 @commands.has_permissions(manage_messages=True)
@@ -65,7 +120,7 @@ async def set_log_channel(ctx, channel):
             aio = bot.get_channel(channel)
             try:
                 await aio.send(embed=em)
-                write_log(channel)
+                write_log_channel(channel)
                 await ctx.send(f"I configured <#{channel}> to log applications!")
             except:
                 await ctx.send("I can't send messages and/or embeds in the specified channel, Please Ensure I am allowed to post embeds and messages in that channel/")
@@ -74,8 +129,8 @@ async def set_log_channel(ctx, channel):
     else:
         await ctx.send(f"Channel argument has been improperly passed.")
 
-@bot.command(name="questions")
-async def questions(ctx, cat):
+@bot.command(name="dump_questions")
+async def dump_questions(ctx, cat):
     try:
         with open(f"{cat}.txt") as file:
             await ctx.send(file.read())
@@ -95,13 +150,19 @@ async def raise_er(ctx, *, context=None):
         await me.send(f"{ctx.message.jump_url}\n{e}")
 
 @bot.command(name="add_question", aliases = ["ad", "add"])
-async def set_question(ctx, cat, *, ques):
+async def add_question(ctx, cat, *, ques):
     try:
         add_question(cat, ques)
         await ctx.send(f"Added question `{ques}` in category `{cat}`")
     except Exception as e:
         await ctx.send(e)
-
+@bot.command(name="rem_question", aliases = ["rem", "remove"])
+async def rem_question(ctx, cat, *, ques):
+    try:
+        remove_question(cat, ques)
+        await ctx.send(f"Removed question `{ques}` in category `{cat}`")
+    except Exception as e:
+        await ctx.send(e)
 @bot.command(name="set_app_channel", aliases=['sac'])
 async def set_app_channel(ctx, chid):
     channel = get_id_from_mention(chid)
@@ -110,7 +171,7 @@ async def set_app_channel(ctx, chid):
             aio = bot.get_channel(channel)
             try:
                 await aio.send(embed=em)
-                write_log(channel)
+                write_applog(channel)
                 await ctx.send(f"I configured <#{channel}> to take applications!")
             except:
                 await ctx.send("I can't send messages and/or embeds in the specified channel, Please Ensure I am allowed to post embeds and messages in that channel.")
@@ -208,6 +269,16 @@ async def remove_req(ctx, app, req):
                 file_source = f.read()
                 f.write(file_source.replace(f"{det}", ""))
             await ctx.send(f"Users will no longer require {return_name_of_role(req)} to apply")
+
+        
+##########################################################################
+###################### idk some indentation work for #####################
+####################### question category hierarchy ######################
+##########################################################################
+@bot.command(name="write_hier")
+async def write_hier(ctx):
+    with open(r"config/hier.txt", "w") as file:
+        file.write(str(ctx.message).replace('`', ""))
 ##########################################################################
 ############### Can The User Apply Check Functions Support ###############
 ################ I'm Too Lazy To Put Them In Real Function ###############
@@ -218,10 +289,9 @@ def get_reqs(app):
     with open(r"config\req.txt") as file:
         ah = file.readlines()
         for ahi in ah:
-            if f"{app}+" in ahi:
+            if f"{app}_" in ahi:
                 some_temp_list.append(int(ahi.split("_")[-1]))
     return some_temp_list
-
 
 def get_role_blacklists(app):
     some_temp_list = []
@@ -289,6 +359,12 @@ def is_any_app_active():
         else:
             return True
 
+def is_app_active(app):
+    with open(r"config\active_apps.txt") as file:
+        if app in file.read():
+            return True
+    return False
+
 def meets_general_req(usrid):
     with open(r"config\req.txt") as file:
         checkInFirst(get_role_ids(usrid), get_general_req())
@@ -302,29 +378,58 @@ def can_apply_to_any(usrid):
     else:
         return False
 
+def meets_app_req(usrid, app):
+    return checkInFirst((get_role_ids(usrid)), get_reqs(app))
 
 ##########################################################################
 ############################# The Main Stuff #############################
 ############################# Because Why Not ############################
 ##########################################################################
 
-def all_checks(ctx):
-    with open("active_apps.txt") as file:
-        if ctx.message.guild.id not in str(file.readlines()):
-            return("There are no active applications in this server.")
-        elif (common_member(get_role_ids(ctx), get_reqs(ctx))) == False:
-            return("There are no applications that you can apply to")
-    if (check(ctx)) == False:
-        return("You cannot apply.")
-    else:
-        return("You might be worthy of applying already")
+async def all_checks(ctx, app):
+    usrid = ctx.author.id
+    if is_any_app_active():
+        if is_app_active(app):
+            if meets_general_req(usrid):
+                if can_apply_to_any(usrid):
+                    if not is_user_blacklisted(app, usrid):
+                        if not is_role_blacklisted(usrid, app):
+                            if meets_app_req(usrid, app):
+                                try:
+                                    await ctx.author.send("Starting application... hang on a moment...")
+                                    return True
+                                except Forbidden:
+                                    return("I can't DM you, please make sure your dms are open.")
+                                except HTTPException:
+                                    return("An error occured, try again later.")
+                            return ("You do not meet the requirements to apply to this application")
+                        return ("You have a role which is blacklisted from applying")
+                    return ("You are blacklisted from applying.")
+                return ("There is no application you can apply to")
+            return ("You do not meet the general requirements for applying.")
+        return ("This application is not accepting applications at the moment.")
+    return ("There is no applicationg taking responses right now.")
+
+def emb(title, ques):
+    em = discord.Embed(title=title, description=ques)
+    em.set_footer("send cancel to cancel your application.")
+    return em
+
+def get_hier():
+    with open(r"config\hier.txt") as file:
+        return file.read()  
 
 @bot.command(name="apply")
-async def apply(ctx):
-    await ctx.send(all_checks(ctx))
-
-
-
+async def apply(ctx, app):
+    x = all_checks(ctx, app)
+    if x != True:
+        await ctx.reply(x)
+    else:
+        await ctx.send("Started application in DMs!")
+        with open("questions/general.txt") as file:
+            for ques in file.readlines():
+                await ctx.author.send(ques)
+        print("continuted") # Continue with application!
 
 ##########################################
 ######## FORGET ABOUT THIS STUFF #########
