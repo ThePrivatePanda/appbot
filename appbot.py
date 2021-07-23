@@ -280,15 +280,33 @@ async def all_checks(ctx, app):
                                             return("I can't DM you, please make sure your dms are open.")
                                         except HTTPException:
                                             return("An error occured, try again later.")
-                                    return ("You do not meet the requirements to apply to this application")
-                                return ("You have a role which is blacklisted from applying")
-                            return ("You are blacklisted from applying.")
-                        return ("There is no application you can apply to")
-                    return ("You do not meet the general requirements for applying.")
-                return ("This application is not accepting applications at the moment.")
-            return ("There is no applicationg taking responses right now.")
-        return("You have a role which is blacklisted for applying to ANY Application.")
-    return("You are blacklisted for applying to ANY Application. 2bad4u")
+                                    x = ("You do not meet the requirements to apply to this application")
+                                    asyncio.create_task(log(f"{ctx.author.id} : {ctx.author} tried to apply, a problem occured: {x}"))
+                                    return x
+                                x = ("You have a role which is blacklisted from applying")
+                                asyncio.create_task(log(f"{ctx.author.id} : {ctx.author} tried to apply, a problem occured: {x}"))
+                                return x
+                            x = ("You are blacklisted from applying.")
+                            asyncio.create_task(log(f"{ctx.author.id} : {ctx.author} tried to apply, a problem occured: {x}"))
+                            return x
+                        x =  ("There is no application you can apply to")
+                        asyncio.create_task(log(f"{ctx.author.id} : {ctx.author} tried to apply, a problem occured: {x}"))
+                        return x
+                    x = ("You do not meet the general requirements for applying.")
+                    asyncio.create_task(log(f"{ctx.author.id} : {ctx.author} tried to apply, a problem occured: {x}"))
+                    return x
+                x = ("This application is not accepting applications at the moment.")
+                asyncio.create_task(log(f"{ctx.author.id} : {ctx.author} tried to apply, a problem occured: {x}"))
+                return x
+            x =  ("There is no applicationg taking responses right now.")
+            asyncio.create_task(log(f"{ctx.author.id} : {ctx.author} tried to apply, a problem occured: {x}"))
+            return x
+        x = ("You have a role which is blacklisted for applying to ANY Application.")
+        asyncio.create_task(log(f"{ctx.author.id} : {ctx.author} tried to apply, a problem occured: {x}"))
+        return x
+    x = ("You are blacklisted for applying to ANY Application. 2bad4u")
+    asyncio.create_task(log(f"{ctx.author.id} : {ctx.author} tried to apply, a problem occured: {x}"))
+    return x
 
 #################################################
 ############## Basically all of the #############
@@ -339,7 +357,7 @@ async def write_app_channel(ctx, chid):
                     try:
                         write_applog(str(channel))
                         await ctx.send(f"I configured <#{channel}> to log applications!")
-                        log(f"User: {ctx.author.id} set <#{channel}> as application log channel")
+                        asyncio.create_task(log(f"User: {ctx.author.id} set <#{channel}> as application log channel"))
                     except Exception as e:
                         await ctx.send(e)
                         
@@ -358,20 +376,18 @@ async def write_app_channel(ctx, chid):
 @bot.command(name="add_question", aliases = ["ad", "add"])
 @commands.is_owner()
 async def add_question(ctx, cat, *, abc):
-    print(abc)
-    # try:
-    #     await add_question(cat, abc)
-    #     await ctx.send(f"Added question `{abc}` in category `{cat}`")
-    # except Exception as e:
-    #     await ctx.send(e)
-    add_question_func(cat, abc)
-    await ctx.send(f"Added question `{abc}` in category `{cat}`")
+    abc = f"{abc}\n"
+    try:
+        add_question_func(cat, abc)
+        await ctx.send(f"Added question `{abc}` in category `{cat}`")
+    except Exception as e:
+        await ctx.send(e)
 
 @bot.command(name="rem_question", aliases = ["rem", "remove"])
 @commands.is_owner()
 async def rem_question(ctx, cat, *, ques):
     try:
-        remove_question(cat, ques)
+        await remove_question(cat, ques)
         await ctx.send(f"Removed question `{ques}` in category `{cat}`")
     except Exception as e:
         await ctx.send(e)
@@ -420,7 +436,7 @@ async def add_req(ctx, app, req):
                 file.write(det)
             await ctx.send(f"Users will now require {await return_name_of_role(req)} to apply for {app}.")
 
-@bot.command(name="remove_req")
+@bot.command(name="remove_req") 
 @commands.is_owner()
 async def remove_req(ctx, app, req):
     req = get_id_from_mention(req)
@@ -507,7 +523,7 @@ async def toggle(ctx, on_or_off, app):
 @commands.is_owner()
 async def dump_questions(ctx, cat):
     try:
-        with open(f"{cat}.txt") as file:
+        with open(fr"questions\{cat}.txt") as file:
             await ctx.send(file.read())
     except FileExistsError:
         await ctx.send("No such category!")
@@ -540,7 +556,7 @@ async def raise_er(ctx, *, context=None):
 
 @bot.command(name="apply")
 async def apply(ctx, app):
-    x = all_checks(ctx, app)
+    x = await all_checks(ctx, app)
     
     if x != True:
         await ctx.reply(x)
