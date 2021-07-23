@@ -270,6 +270,9 @@ async def remove_req(ctx, app, req):
                 f.write(file_source.replace(f"{det}", ""))
             await ctx.send(f"Users will no longer require {return_name_of_role(req)} to apply")
 
+def get_applog():
+    with open(r"config/applog.txt") as file:
+        return int(file.read())
         
 ##########################################################################
 ###################### idk some indentation work for #####################
@@ -277,8 +280,9 @@ async def remove_req(ctx, app, req):
 ##########################################################################
 @bot.command(name="write_hier")
 async def write_hier(ctx):
-    with open(r"config/hier.txt", "w") as file:
-        file.write(str(ctx.message).replace('`', ""))
+    if str(ctx.message).replace("`", "") != "" or str(ctx.message).replace("`", "") != "\n":
+        with open(r"config/hier.txt", "w") as file:
+            file.write(str(ctx.message).replace('`', ""))
 ##########################################################################
 ############### Can The User Apply Check Functions Support ###############
 ################ I'm Too Lazy To Put Them In Real Function ###############
@@ -417,19 +421,64 @@ def emb(title, ques):
 
 def get_hier():
     with open(r"config\hier.txt") as file:
-        return file.read()  
+        return file.readlines()
+def get_indent(stri):
+    return stri.count(" ")
 
 @bot.command(name="apply")
 async def apply(ctx, app):
     x = all_checks(ctx, app)
+    
     if x != True:
         await ctx.reply(x)
     else:
         await ctx.send("Started application in DMs!")
-        with open("questions/general.txt") as file:
-            for ques in file.readlines():
-                await ctx.author.send(ques)
-        print("continuted") # Continue with application!
+        answer_embed = discord.Embed(title="Application", description=f"Application of user {ctx.author} for app {app}")
+        z = get_hier()
+        for i in z():
+            if z.index(i) != (len(x)-1) and get_indent(i) != get_indent(i+1):
+                x = get_hier()[i].replace(':', '\'\'').replace(" ", "")
+                with open(f"questions/{x}.txt") as file:
+                    for ques in file.readlines():
+                        await ctx.author.send(emb(x, ques))
+                        def check(m):
+                            return m.author.id == ctx.author.id and m.channel.id == ctx.channel.id
+                        msg = await bot.wait_for("message", check=check)
+                        if msg.content != "cancel":
+                            answer_embed.add_field(name=ques, value=msg)
+                        else:
+                            await ctx.author.send("Cancelled application.")
+                            log(f"User {ctx.author} cancelled their application.")
+                            return
+            elif z.index(i) != (len(x)-1) and get_indent(i) == get_indent(i+1):
+                a1 = str(i).replace(":", "").repalce(" ", "")
+                a2 = str(i+1).replace(":", "").repalce(" ", "")
+                await ctx.author.send(f"Would you like to answer questions for category: {a1} or for category: {a2}\nAnswer with the category name exactly as it appears.")
+                def check(m):
+                    return m.author.id == ctx.author.id and m.channel.id == ctx.channel.id
+                msg = await bot.wait_for("message", check=check)
+                if msg.content != "cancel":
+                    with open(f"questions/{msg.content}.txt") as file:
+                        for ques in file.readlines():
+                            await ctx.author.send(emb(x, ques))
+                            def check(m):
+                                return m.author.id == ctx.author.id and m.channel.id == ctx.channel.id
+                            msg = await bot.wait_for("message", check=check)
+                            if msg.content != "cancel":
+                                answer_embed.add_field(name=ques, value=msg)
+                            else:
+                                await ctx.author.send("Cancelled application.")
+                                log(f"User {ctx.author} cancelled their application.")
+                                return
+                else:
+                    await ctx.author.send("Cancelled application.")
+                    log(f"User {ctx.author} cancelled their application.")
+                    return
+        bot.get_channel(get_applog).send(answer_embed)
+        return
+
+
+
 
 ##########################################
 ######## FORGET ABOUT THIS STUFF #########
