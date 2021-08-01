@@ -12,4 +12,4 @@ owa
 in category qAdded Question:
 skem
 
-in category q
+in category qSet <#857816215237427210> as log channelUser: 736147895039819797 set <#857816215237427210> as log channelUser: 736147895039819797 set <#843773991055654926> as log channel

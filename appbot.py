@@ -1,12 +1,9 @@
-import re
-import asyncio
-import discord
-import os
-import sys
+import asyncio, discord, os, sys
 from discord.errors import Forbidden, HTTPException, NotFound
 from collections import Counter
 from discord.ext import commands
-
+from discord.utils import get
+# import help_cmd
 em = discord.Embed(title="Test Embed", description="Just ensuring i can send messages and embeds here")
 
 token = sys.argv[1]
@@ -37,8 +34,10 @@ async def on_message(msg):
     pass
 ##########################################################################
 ################################## Help ##################################
-################################# command ################################
+################################# Command ################################
 ##########################################################################
+
+
 ##########################################################################
 ################### some tiny dependant functions ########################
 #################### for good and happy working ##########################
@@ -78,12 +77,10 @@ def get_id_from_mention(mention):
 def write_log_channel(chid):
     with open(r"config/logch.txt", "w") as f:
         f.write(chid)
-    asyncio.create_task(log(f"Set <#{chid}> as log channel"))
 
 def write_applog(chid):
     with open(r"config/applog.txt", "w") as f:
         f.write(chid)
-    asyncio.create_task(log(f"Set <#{chid}> to log applications"))
 
 def write_blacklist_user(app, usrid):
     with open(r"bl\usr_blacklists.txt", "a") as f:
@@ -133,6 +130,61 @@ def write_global_whitelist_role(id):
         f.write(file_source.replace(f"{id}", ""))
     asyncio.create_task(log(f"Whitelisted role {id} globally"))
 
+def get_app_role(app):
+    with open("config\app_role.txt") as file:
+        if app not in file.read():
+            return
+        else:
+            for a in file.readlines():
+                if app in a:
+                    return (a.split("_"))[-1]
+
+async def acc_app(ctx, app, usrid):
+    try:
+        usr = await bot.get_user(usrid)
+        rl = get(ctx.guild.roles, id=(int(get_app_role(app))))
+        await usr.add_roles(rl)
+    except:
+        pass
+
+def write_answer(usr, app, ques, ans):
+    with open(fr"answers\{usr}_{app}.txt", "a") as file:
+        file.write(f"{ques}_-_{ans}")
+
+def get_ques(s):
+    return (s.split("_-_"))[0]
+
+def get_ans(s):
+    return (s.split("_-_"))[1]
+
+def build_ans_embed(usr, app):
+    with open(fr"answers\{usr}_{app}.txt") as file:
+        x = file.readlines()
+        em1 = discord.Embed(title="App Page 1", description=f"Page 1 of application of user: {usr.name} with id {usr.id} applying for {app}")
+        em2 = discord.Embed(title="App Page 2", description=f"Page 2 of application of user: {usr.name} with id {usr.id} applying for {app}")
+        em3 = discord.Embed(title="App Page 2", description=f"Page 2 of application of user: {usr.name} with id {usr.id} applying for {app}")
+        em4 = discord.Embed(title="App Page 2", description=f"Page 2 of application of user: {usr.name} with id {usr.id} applying for {app}")
+        
+        for i in range(len(x)):
+            if i < 25 or i == 25:
+                em1.add_field(name=f"{get_ques(x[i])}", value=f"{get_ans(x[i])}")
+            elif i > 25 and (i < 50 or i == 50):
+                em2.add_field(name=f"{get_ques(x[i])}", value=f"{get_ans(x[i])}")
+            elif i > 50 and (i < 75 or i == 75):
+                em3.add_field(name=f"{get_ques(x[i])}", value=f"{get_ans(x[i])}")
+            elif i > 75 and (i < 100 or i == 100):
+                em4.add_field(name=f"{get_ques(x[i])}", value=f"{get_ans(x[i])}")
+    asas = []
+    if len(em1.fields) != 0:
+        asas.append(em1)
+    if len(em2.fields) != 0:
+        asas.append(em2)
+    if len(em3.fields) != 0:
+        asas.append(em3)
+    if len(em4.fields) != 0:
+        asas.append(em4)
+
+    return asas
 ##########################################################################
 ################### Check Depndancy Functions For Less ###################
 ################### Confoosun in Main Check Functions ####################
@@ -283,10 +335,10 @@ async def all_checks(ctx, app):
                                     x = ("You do not meet the requirements to apply to this application")
                                     asyncio.create_task(log(f"{ctx.author.id} : {ctx.author} tried to apply, a problem occured: {x}"))
                                     return x
-                                x = ("You have a role which is blacklisted from applying")
+                                x = ("You have a role which is blacklisted from applying for this app")
                                 asyncio.create_task(log(f"{ctx.author.id} : {ctx.author} tried to apply, a problem occured: {x}"))
                                 return x
-                            x = ("You are blacklisted from applying.")
+                            x = ("You are blacklisted from applying for this app.")
                             asyncio.create_task(log(f"{ctx.author.id} : {ctx.author} tried to apply, a problem occured: {x}"))
                             return x
                         x =  ("There is no application you can apply to")
@@ -327,7 +379,7 @@ async def set_log_channel(ctx, channel):
                     try:
                         write_log_channel(str(channel))
                         await ctx.send(f"I configured <#{channel}> to log everything other than applications!")
-                        asyncio.create_task(log(f"User: {ctx.author.id} set <#{channel}> as log channel"))
+                        asyncio.create_task(log(f"{ctx.author.id} : {ctx.author.name} set <#{channel}> as log channel"))
                     except Exception as e:
                         await ctx.send(e)
                         
@@ -357,7 +409,7 @@ async def write_app_channel(ctx, chid):
                     try:
                         write_applog(str(channel))
                         await ctx.send(f"I configured <#{channel}> to log applications!")
-                        asyncio.create_task(log(f"User: {ctx.author.id} set <#{channel}> as application log channel"))
+                        asyncio.create_task(log(f"{ctx.author.id} : {ctx.author.name} set <#{channel}> as application log channel"))
                     except Exception as e:
                         await ctx.send(e)
                         
@@ -386,6 +438,7 @@ async def add_question(ctx, cat, *, abc):
 @bot.command(name="rem_question", aliases = ["rem", "remove"])
 @commands.is_owner()
 async def rem_question(ctx, cat, *, ques):
+    ques = f"{ques}\n"
     try:
         await remove_question(cat, ques)
         await ctx.send(f"Removed question `{ques}` in category `{cat}`")
@@ -500,6 +553,36 @@ async def set_prefix(ctx, new_prefix):
     with open(r"config\prefix.txt", "w") as file:
         file.write(new_prefix)
 
+@bot.command(name="consider")
+async def consider(ctx, app, usrid, msg=None):
+    usr = bot.get_user(usrid)
+    if msg != None:
+        await usr.send(f"Your application for {app} is being considered. Also, {msg}")
+    else:
+        await usr.send(f"Your application for {app} is being considered.")
+    await log(f"{ctx.author.id} ({ctx.author.name}) considered {usrid}'s application for {app}")
+
+@bot.command(name="accept")
+async def consider(ctx, app, usrid, msg=None):
+    usr = bot.get_user(usrid)
+    if msg != None:
+        await usr.send(f"Your application for {app} has been accepted. Also, {msg}")
+    else:
+        await usr.send(f"Your application for {app} has been accepted.")
+    try:
+        await acc_app(ctx, app, usrid)
+        await ctx.send("Added role to user")
+    except:
+        await ctx.send("ok")
+
+@bot.command(name="reject", aliases=["deny", "decline"])
+async def consider(app, usrid, msg=None):
+    usr = bot.get_user(usrid)
+    if msg != None:
+        await usr.send(f"Your application for {app} has been rejected. Also, {msg}")
+    else:
+        await usr.send(f"Your application for {app} has been rejected.")
+
 @bot.command(nam="toggle")
 @commands.is_owner()
 async def toggle(ctx, on_or_off, app):
@@ -521,14 +604,46 @@ async def toggle(ctx, on_or_off, app):
 
 @bot.command(name="dump_questions", aliases=['dump', 'questions', 'dumpq'])
 @commands.is_owner()
-async def dump_questions(ctx, cat):
-    try:
-        with open(fr"questions\{cat}.txt") as file:
-            await ctx.send(file.read())
-    except FileExistsError:
-        await ctx.send("No such category!")
-    except Exception as e:
-        await ctx.send(e)
+async def dump_questions(ctx, cat=None):
+    if cat != None:
+        try:
+            with open(fr"questions\{cat}.txt") as file:
+                await ctx.send(file.read())
+        except FileExistsError:
+            await ctx.send("No such category!")
+        except Exception as e:
+            await ctx.send(e)
+    else:
+        emb = discord.Embed(title="All Questions", description="All categories and their questions.")
+        for fl in next(os.walk("questions"), (None, None, []))[2]:
+            with open(fr"questions\{fl}") as file:
+                if file.readlines != "":
+                    emb.add_field(name=fl.replace(".txt", ""), value=file.read(), inline=False)
+                else:
+                    emb.add_field(name=fl.replace(".txt", ""), value=file.read(), inline=False)
+                await ctx.send(embed=emb)
+
+@bot.command(name="dump_req", aliases=['dumpr', 'requirements', 'reqs'])
+@commands.is_owner()
+async def dump_req(ctx, cat=None):
+    if cat != None:
+        try:
+            with open(fr"config\{cat}.txt") as file:
+                await ctx.send(file.read())
+        except FileExistsError:
+            await ctx.send("No such category!")
+        except Exception as e:
+            await ctx.send(e)
+    else:
+        emb = discord.Embed(title="All Questions", description="All categories and their questions.")
+        for fl in next(os.walk("questions"), (None, None, []))[2]:
+            with open(r"config\req.txt") as file:
+                if file.read().replace("\n", "") != "":
+                    ahi = file.readlines()
+                    for ah in ahi:
+                        x = ah.split("_")
+                        emb.add_field(name=x[0], value=(await return_name_of_role(x[1])), inline=False)
+                await ctx.send(embed=emb)
 
 @bot.command(name="write_hier")
 @commands.is_owner()
@@ -540,6 +655,7 @@ async def write_hier(ctx):
 async def is_mentioned(msg):
     if msg.content == f"<@843774061867827220>" or msg.content == f"<@!843774061867827220>":
         await msg.channel.send(f"ME PREFIX IS `{get_prefix()}` YEY")
+
 #################################################
 ############## Basically all of the #############
 ############## Actual Bot Commands ##############
@@ -557,54 +673,80 @@ async def raise_er(ctx, *, context=None):
 @bot.command(name="apply")
 async def apply(ctx, app):
     x = await all_checks(ctx, app)
-    
+
     if x != True:
         await ctx.reply(x)
     else:
         await ctx.send("Started application in DMs!")
-        answer_embed = discord.Embed(title="Application", description=f"Application of user {ctx.author} for app {app}")
         z = get_hier()
-        for i in z():
-            if z.index(i) != (len(x)-1) and get_indent(i) != get_indent(i+1):
-                x = get_hier()[i].replace(':', '\'\'').replace(" ", "")
-                with open(f"questions/{x}.txt") as file:
-                    for ques in file.readlines():
-                        await ctx.author.send(emb(x, ques))
-                        def check(m):
-                            return m.author.id == ctx.author.id and m.channel.id == ctx.channel.id
-                        msg = await bot.wait_for("message", check=check)
-                        if msg.content != "cancel":
-                            answer_embed.add_field(name=ques, value=msg)
-                        else:
-                            await ctx.author.send("Cancelled application.")
-                            log(f"User {ctx.author} cancelled their application.")
-                            return
-            elif z.index(i) != (len(x)-1) and get_indent(i) == get_indent(i+1):
-                a1 = str(i).replace(":", "").repalce(" ", "")
-                a2 = str(i+1).replace(":", "").repalce(" ", "")
-                await ctx.author.send(f"Would you like to answer questions for category: {a1} or for category: {a2}\nAnswer with the category name exactly as it appears.")
-                def check(m):
-                    return m.author.id == ctx.author.id and m.channel.id == ctx.channel.id
-                msg = await bot.wait_for("message", check=check)
-                if msg.content != "cancel":
-                    with open(f"questions/{msg.content}.txt") as file:
+
+        for i in range(len(z)):
+            if i != (len(z)-1):
+                if i < (len(z)-1) and get_indent(z[i]) != get_indent(z[i+1]):
+                    x = get_hier()[z[i]].replace(':', '\'\'').replace(" ", "")
+                    with open(f"questions/{x}.txt") as file:
                         for ques in file.readlines():
                             await ctx.author.send(emb(x, ques))
                             def check(m):
                                 return m.author.id == ctx.author.id and m.channel.id == ctx.channel.id
                             msg = await bot.wait_for("message", check=check)
                             if msg.content != "cancel":
-                                answer_embed.add_field(name=ques, value=msg)
+                                write_answer(ctx.author.id, app, ques, msg.content)
                             else:
                                 await ctx.author.send("Cancelled application.")
                                 log(f"User {ctx.author} cancelled their application.")
                                 return
-                else:
-                    await ctx.author.send("Cancelled application.")
-                    log(f"User {ctx.author} cancelled their application.")
-                    return
-        bot.get_channel(get_applog).send(answer_embed)
-        return
+
+                elif i < (len(z)-1) and get_indent(z[i]) == get_indent(z[i+1]):
+                    a1 = str(z[i]).replace(":", "").repalce(" ", "")
+                    a2 = str(z[i+1]).replace(":", "").repalce(" ", "")
+                    await ctx.author.send(f"Would you like to answer questions for category: {a1} or for category: {a2}\nAnswer with the category name exactly as it appears.")
+                    def check(m):
+                        return m.author.id == ctx.author.id and m.channel.id == ctx.channel.id
+                    msg = await bot.wait_for("message", check=check)
+                    if msg.content != "cancel":
+                        with open(f"questions/{msg.content}.txt") as file:
+                            for ques in file.readlines():
+                                await ctx.author.send(emb(x, ques))
+                                def check(m):
+                                    return m.author.id == ctx.author.id and m.channel.id == ctx.channel.id
+                                msg = await bot.wait_for("message", check=check)
+                                if msg.content != "cancel":
+                                    write_answer(ctx.author.id, app, ques, msg.content)
+                                else:
+                                    await ctx.author.send("Cancelled application.")
+                                    log(f"User {ctx.author} cancelled their application.")
+                                    return
+            else:
+                if get_indent(z[i]) == get_indent(z[i+1]):
+                    a1 = str(z[i]).replace(":", "").repalce(" ", "")
+                    a2 = str(z[i+1]).replace(":", "").repalce(" ", "")
+                    await ctx.author.send(f"Would you like to answer questions for category: {a1} or for category: {a2}\nAnswer with the category name exactly as it appears.")
+                    def check(m):
+                        return m.author.id == ctx.author.id and m.channel.id == ctx.channel.id
+                    msg = await bot.wait_for("message", check=check)
+                    if msg.content != "cancel":
+                        with open(f"questions/{msg.content}.txt") as file:
+                            for ques in file.readlines():
+                                await ctx.author.send(emb(x, ques))
+                                def check(m):
+                                    return m.author.id == ctx.author.id and m.channel.id == ctx.channel.id
+                                msg = await bot.wait_for("message", check=check)
+                                if msg.content != "cancel":
+                                    write_answer(ctx.author.id, app, ques, msg.content)
+                                    await ctx.author.send("Applicationg completed")
+                                else:
+                                    await ctx.author.send("Cancelled application.")
+                                    log(f"User {ctx.author} cancelled their application.")
+                                    return
+
+
+
+
+        x = build_ans_embed(ctx.author, app)
+        alc = bot.get_channel(get_applog())
+        for a in x:
+            alc.send(embed=a)
 
 
 ##########################################
@@ -645,3 +787,4 @@ async def enable(ctx, command):
 
 
 bot.run(token)
+# ODQzNzc0MDYxODY3ODI3MjIw.YKIv1A.UOAwLrxYtOaq4wLjnQSoSMMmdX4
