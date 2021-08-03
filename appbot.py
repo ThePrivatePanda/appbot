@@ -37,36 +37,176 @@ async def on_message(msg):
 ################################# Command ################################
 ##########################################################################
 
+@bot.group(invoke_without_command=True)
+async def help(ctx):
+    em = discord.Embed(title="Help Page", description=f"use {get_prefix()}help <command> for a more detailed help on the command.")
+    em.add_field(
+        name="Admin Commands", 
+        value=("""
+            1) set_log_channel
+            2) set_app_channel
+            3) add_question
+            4) rem_question
+            5) blacklist
+            6) whitelist
+            7) add_req
+            8) remove_req
+            9) global_blacklist
+            10) global_whitelist
+            11) add_owner
+            12) rem_owner
+            13) set_prefix
+            13) toggle
+            14) dump_questions
+            15) write_hier
+            """))
+    em.add_field(name="Public Commands", value="""
+            1) help
+            2) apply
+            3) raise_er
+            """)
+    await ctx.send(embed=em)
+@help.command(aliases=['slc'])
+async def set_log_channel(ctx):
+    em = discord.Embed(title="set_log_channel command help", description="Detailed help on the `set_log_channel` command.")
+    em.add_field(name="aliases", value="This command has one alias: `slc`", inline=False)
+    em.add_field(name="Usage", value="This command will set the channel where logs will be written. Logs include commands used and status of applications.", inline=False)
+    em.add_field(name="Syntax", value=f"""
+        This command takes a single argument, that is, the channel argument
+        You can give the channel ID, or the channel mention:
+        {get_prefix()}set_log_channel #channel
+        {get_prefix()}set_log_channel channel_id
+        """, inline=False)
+    await ctx.send(embed=em)
+@help.command(aliases=['sac'])
+async def set_app_channel(ctx):
+    em = discord.Embed(title="set_app_channel command help", description="Detailed help on the `set_app_channel` command.")
+    em.add_field(name="aliases", value="This command has one alias: `sac`", inline=False)
+    em.add_field(name="Usage", value="Set the channel where completed applications appear.", inline=False)
+    em.add_field(name="Syntax", value=f"""
+        This command takes a single argument, that is, the channel argument
+        You can give the channel ID, or the channel mention:
+        {get_prefix()}set_app_channel #channel
+        {get_prefix()}set_app_channel channel_id
+        """, inline=False)
+    await ctx.send(embed=em)
+
+@help.command(aliases=['add', 'aq', 'addq'])
+async def add_question(ctx):
+    em = discord.Embed(title="`add_question` command help", description="Detailed help on the `add_question` command.")
+    em.add_field(name="aliases", value="This command has three aliases: `add`, `aq` and `addq`", inline=False)
+    em.add_field(name="Usage", value="Adds a question to a category. Makes a category if there is no question in the category before.", inline=False)
+    em.add_field(name="Syntax", value=f"""
+        This command takes two arguments, those are, the category argument and the question itself
+        You must give the exact name of the category, which also must be in single quotes:
+        {get_prefix()}add_question 'dank' What prestige level are you?
+        """, inline=False)
+    await ctx.send(embed=em)
+@help.command(aliases=['rem', 'remove', 'rq'])
+async def rem_question(ctx):
+    em = discord.Embed(title="`rem_question` command help", description="Detailed help on the `rem_question` command.")
+    em.add_field(name="aliases", value="This command has three aliases: `rem`, `remove` and `remq`", inline=False)
+    em.add_field(name="Usage", value="Removes a question from a category. Note: The question must be exactly as it appears.", inline=False)
+    em.add_field(name="Syntax", value=f"""
+        This command takes two arguments, those are, the category argument and the question itself
+        You must give the exact name of the category, which also must be in single quotes, and the question also must be exactly as it appears:
+        {get_prefix()}rem_question 'dank' What prestige level are you?
+        """, inline=False)
+    await ctx.send(embed=em)
+
+@help.command(aliases=['bl'])
+async def blacklist(ctx):
+    em = discord.Embed(title="`blacklist` command help", description="Detailed help on the `blacklist` command.")
+    em.add_field(name="aliases", value="This command has one alias: `bl`", inline=False)
+    em.add_field(name="Usage", value="Blacklist a role or user by id or mention, for a specific application or globally.", inline=False)
+    em.add_field(name="Syntax", value=f"""
+        This command takes two arguments, the first, the user or role mention or id, and the second, which is optional, the name of the application:
+        1. {get_prefix()}blacklist @role tmod
+        2. {get_prefix()}blacklist user_id owner
+        3. {get_prefix()}blacklist user_id
+        
+        Note: The third one will result in a global blacklist of the user
+        """, inline=False)
+    await ctx.send(embed=em)
+@help.command(aliases=['wl'])
+async def whitelist(ctx):
+    em = discord.Embed(title="`whitelist` command help", description="Detailed help on the `whitelist` command.")
+    em.add_field(name="aliases", value="This command has one alias: `wl`", inline=False)
+    em.add_field(name="Usage", value="Whitelist a role or user by id or mention, for a specific application or globally.", inline=False)
+    em.add_field(name="Syntax", value=f"""
+        This command takes two arguments, the first, the user or role mention or id, and the second, which is optional, the name of the application:
+        1. {get_prefix()}whitelist @role tmod
+        2. {get_prefix()}whitelist user_id owner
+        3. {get_prefix()}wl user_id
+        
+        Note: The third one will result in a global whitelist of the user
+        """, inline=False)
+    await ctx.send(embed=em)
+
+@help.command(aliases=['ar'])
+async def add_req(ctx):
+    em = discord.Embed(title="`add_req` command help", description="Detailed help on the `add_req` command.")
+    em.add_field(name="aliases", value="This command has one alias: `ar`", inline=False)
+    em.add_field(name="Usage", value="Add a role requirement to an application or globally", inline=False)
+    em.add_field(name="Syntax", value=f"""
+        This command takes two arguments, the first, the role mention or id, and the second, which is optional, the name of the application:
+        1. {get_prefix()}add_req @role tmod
+        2. {get_prefix()}add_req role_id owner
+        3. {get_prefix()}ar role_id
+        
+        Note: The third one will result in role_id being a requirement for all applicatoins, i.e. a general req
+        """, inline=False)
+    await ctx.send(embed=em)
+@help.command(aliases=['rr'])
+async def rem_req(ctx):
+    em = discord.Embed(title="`rem_req` command help", description="Detailed help on the `rem_req` command.")
+    em.add_field(name="aliases", value="This command has one alias: `rr`", inline=False)
+    em.add_field(name="Usage", value="Remove a role requirement to an application or globally", inline=False)
+    em.add_field(name="Syntax", value=f"""
+        This command takes two arguments, the first, the role mention or id, and the second, which is optional, the name of the application:
+        1. {get_prefix()}rem_req @role tmod
+        2. {get_prefix()}rem_req role_id owner
+        3. {get_prefix()}rr role_id
+        
+        Note: The third one will result in role_id NO LONGER being a requirement for all applicatoins, i.e. a general req
+        """, inline=False)
+    await ctx.send(embed=em)
 
 ##########################################################################
 ################### some tiny dependant functions ########################
 #################### for good and happy working ##########################
 ##########################################################################
 async def log(content):
-    content = str(content)
-    with open(r"config\log.txt", "a") as file:
-        file.write(content)
-    with open(r"config\logch.txt") as file:
-        x = int(file.read())
-    ch = bot.get_channel(x)
-    if ch != None:
-        await ch.send(content)
-        return
-    else:
-        ch = bot.fetch_channel(x)
+    try:
+        content = str(content)
+        with open(r"config\log.txt", "a") as file:
+            file.write(content)
+        with open(r"config\logch.txt") as file:
+            x = int(file.read())
+        ch = bot.get_channel(x)
         if ch != None:
             await ch.send(content)
             return
-    return False
-
+        else:
+            ch = bot.fetch_channel(x)
+            if ch != None:
+                await ch.send(content)
+                return
+        return False
+    except Exception as e:
+        print(e)
 
 def add_question_func(cat, ques):
-    with open(f"questions\{cat}.txt", "a") as file:
-        file.write(ques)
-    asyncio.create_task(log(f"Added Question:\n{ques}\nin category {cat}"))
+    try:
+        with open(fr"questions\{cat}.txt", "a") as file:
+            file.write(ques)
+        asyncio.create_task(log(f"Added Question:\n{ques}\nin category {cat}"))
+    except Exception as e:
+        print(e)
+        asyncio.create_task(log(f"{e}"))
 
 def remove_question(cat, ques):
-    with open(f"questions\{cat}.txt", "a") as file:
+    with open(fr"questions\{cat}.txt", "a") as file:
         file_source = file.read()
         file.write(file_source.replace(f"{ques}", ""))
     asyncio.create_task(log(f"Removed Question:\n{ques}\nfrom category {cat}"))
@@ -77,61 +217,69 @@ def get_id_from_mention(mention):
 def write_log_channel(chid):
     with open(r"config/logch.txt", "w") as f:
         f.write(chid)
+    asyncio.create_task(log(f"set {chid} to log"))
 
 def write_applog(chid):
     with open(r"config/applog.txt", "w") as f:
         f.write(chid)
+    asyncio.create_task(log(f"set {chid} to app log"))
 
-def write_blacklist_user(app, usrid):
-    with open(r"bl\usr_blacklists.txt", "a") as f:
-        f.write(f"{app}_{usrid}")
-    asyncio.create_task(log(f"Blacklisted user {usrid} for app {app}"))
+def write_blacklist_user(usrid, app=None):
+    usrid = get_id_from_mention(usrid)
+    if app is not None:
+        with open(r"bl\usr_blacklists.txt", "a") as f:
+            f.write(f"{app}_{usrid}")
+        asyncio.create_task(log(f"Blacklisted user {usrid} for app {app}."))
+    else:
+        with open(r"bl\usr_blacklists.txt", "a") as f:
+            f.write(f"gbl_{usrid}")
+        asyncio.create_task(log(f"Blacklisted user {usrid} globally."))
 
-def write_blacklist_role(app, rlid):
-    with open(r"b\rl_blacklists.txt", "a") as f:
-        f.write(f"{app}_{rlid}")
-    asyncio.create_task(log(f"Blacklisted role {rlid} for app {app}"))
+def write_blacklist_role(rlid, app=None):
+    rlid = get_id_from_mention(rlid)
+    if app is not None:
+        with open(r"b\rl_blacklists.txt", "a") as f:
+            f.write(f"{app}_{rlid}")
+        asyncio.create_task(log(f"Blacklisted role {rlid} for app {app}."))
+    else:
+        with open(r"b\rl_blacklists.txt", "a") as f:
+            f.write(f"gbl_{rlid}")
+        asyncio.create_task(log(f"Blacklisted role {rlid} globally."))
 
-def write_whitelist_user(app, usrid):
-    with open(r"bl\usr_blacklists.txt", "r+") as f:
-        file_source = f.read()
-        f.write(file_source.replace(f"{app}_{usrid}", ""))
-    asyncio.create_task(log(f"Whitelisted user {usrid} for app {app}"))
 
-def write_whitelist_role(app, rlid):
-    with open(r"bl\rl_blacklists.txt", "r+") as f:
-        file_source = f.read()
-        f.write(file_source.replace(f"{app}_{rlid}", ""))
-    asyncio.create_task(log(f"Whitelisted role {rlid} for app {app}"))
+def write_whitelist_user(usrid, app=None):
+    usrid = get_id_from_mention(usrid)
+    if app is not None:
+        with open(r"bl\usr_blacklists.txt", "r+") as f:
+            file_source = f.read()
+            f.write(file_source.replace(f"{app}_{usrid}", ""))
+        asyncio.create_task(log(f"Whitelisted user {usrid} for app {app}"))
+    else:
+        with open(r"bl\usr_blacklists.txt", "r+") as f:
+            file_source = f.read()
+            f.write(file_source.replace(f"gbl_{usrid}", ""))
+        asyncio.create_task(log(f"Whitelisted user {usrid} for app {app}"))
+
+def write_whitelist_role(rlid, app=None):
+    rlid = get_id_from_mention(rlid)
+    if app is not None:
+        with open(r"bl\rl_blacklists.txt", "r+") as f:
+            file_source = f.read()
+            f.write(file_source.replace(f"gbl_{rlid}", ""))
+        asyncio.create_task(log(f"Globally whitelisted {return_name_of_role(rlid)}"))
+    else:
+        with open(r"bl\rl_blacklists.txt", "r+") as f:
+            file_source = f.read()
+            f.write(file_source.replace(f"{app}_{rlid}", ""))
+        asyncio.create_task(log(f"Whitelisted role {rlid} for app {app}"))
+
 
 def get_applog():
-    with open(r"config/applog.txt") as file:
+    with open(r"config\applog.txt") as file:
         return int(file.read())
 
-def write_global_blacklist_user(id):
-    with open(r"bl\global_blacklist_user.txt", "a") as file:
-        file.write(id)
-    asyncio.create_task(log(f"Blacklisted user {id} globally"))
-
-def write_global_blacklist_role(id):
-    with open(r"bl\global_blacklist_role.txt", "a") as file:
-        file.write(id)
-    asyncio.create_task(log(f"Blacklisted role {id} globally"))
-
-def write_global_whitelist_user(id):
-    with open(r"bl\global_blacklist_user.txt", "r+") as f:
-        file_source = f.read()
-        f.write(file_source.replace(f"{id}", ""))
-    asyncio.create_task(log(f"Whitelisted user {id} globally"))
-
-def write_global_whitelist_role(id):
-    with open(r"bl\global_blacklist_role.txt", "r+") as f:
-        file_source = f.read()
-        f.write(file_source.replace(f"{id}", ""))
-    asyncio.create_task(log(f"Whitelisted role {id} globally"))
-
 def get_app_role(app):
-    with open("config\app_role.txt") as file:
+    with open(r"config\app_role.txt") as file:
         if app not in file.read():
             return
         else:
@@ -205,7 +353,7 @@ def get_reqs(app):
 
 def get_role_blacklists(app):
     some_temp_list = []
-    with open(r"bl\blacklists.txt") as file:
+    with open(r"bl\rl_blacklists.txt") as file:
         ah = file.readlines()
         for ahi in ah:
             if f"{app}_" in ahi:
@@ -216,7 +364,7 @@ def common_member(a, b):
     return(any(i in a for i in b))
 
 def get_role_ids(usrid):
-    usr = bot.fetch_user(usrid)
+    usr = bot.get_user(usrid)
     roles_ids = []
     for y in usr.roles:
         roles_ids.append(y.id)
@@ -259,9 +407,21 @@ def get_hier():
 def get_indent(stri):
     return stri.count(" ")
 
+def get_global_user_blacklists():
+    stl = []
+    with open(r"bl\usr_blacklists.txt") as file:
+        for ah in file.readlines():
+            if "gbl_" in ah:
+                stl.append(ah.split("_")[1])
+    return stl
+
 def get_global_role_blacklists():
-    with open(r"bl\global_blacklist_role.txt") as file:
-        return file.readlines()
+    stl = []
+    with open(r"bl\rl_blacklists.txt") as file:
+        for ah in file.readlines():
+            if "gbl_" in ah:
+                stl.append(ah.split("_")[1])
+    return stl
 
 ##########################################################################
 ############################# All The Checks #############################
@@ -277,15 +437,10 @@ def is_role_blacklisted(usrid, app):
         return common_member((get_role_ids(usrid)), get_role_blacklists(app))
 
 def is_global_usr_bl(id):
-    with open(r"bl\global_blacklist_user.txt") as file:
-        if id in file.read():
-            return True
-        else:
-            return False
+    return id in get_global_user_blacklists()
 
 def is_global_role_bl(id):
-    with open(r"bl\global_blacklist_role.txt") as file:
-        return common_member((get_role_ids(id), get_global_role_blacklists()))
+    return id in get_global_role_blacklists
 def is_any_app_active():
     with open(r"config\active_apps.txt") as file:
         if str(file.read()).replace("\n", "") == "":
@@ -425,7 +580,7 @@ async def write_app_channel(ctx, chid):
         await ctx.reply(e)
         return
 
-@bot.command(name="add_question", aliases = ["ad", "add"])
+@bot.command(name="add_question", aliases = ["aq", "add", "addq"])
 @commands.is_owner()
 async def add_question(ctx, cat, *, abc):
     abc = f"{abc}\n"
@@ -435,7 +590,7 @@ async def add_question(ctx, cat, *, abc):
     except Exception as e:
         await ctx.send(e)
 
-@bot.command(name="rem_question", aliases = ["rem", "remove"])
+@bot.command(name="rem_question", aliases = ["rem", "remove", "remq"])
 @commands.is_owner()
 async def rem_question(ctx, cat, *, ques):
     ques = f"{ques}\n"
@@ -447,29 +602,29 @@ async def rem_question(ctx, cat, *, ques):
 
 @bot.command(name="whitelist", aliases=['wl'])
 @commands.is_owner()
-async def whitelist(ctx, app, id):
+async def whitelist(ctx, id, app=None):
     try:
         bot.fetch_user(id)
-        write_whitelist_user(app, id)
+        write_whitelist_user(id, app)
     except HTTPException:
         await ctx.send("Error, could you please re-run the command")
     except NotFound:
-        write_whitelist_role(id)
+        write_whitelist_role(id, app)
 
 @bot.command(name="blacklist", aliases=['bl'])
 @commands.is_owner()
-async def blacklist(ctx, app, id):
+async def blacklist(ctx, id, app=None):
     try:
         bot.fetch_user(id)
-        write_blacklist_user(app, id)
+        write_blacklist_user(id, app)
     except HTTPException:
         await ctx.send("Error, could you please re-run the command")
     except NotFound:
-        write_blacklist_role(id)
+        write_blacklist_role(id, app)
 
-@bot.command(name="add_req")
+@bot.command(name="add_req", aliases=['ar'])
 @commands.is_owner()
-async def add_req(ctx, app, req):
+async def add_req(ctx, req, app=None):
     req = get_id_from_mention(req)
     try:
         guild.get_role(req)
@@ -479,17 +634,30 @@ async def add_req(ctx, app, req):
     except NotFound:
         await ctx.send("I am taking only roles as requirements as of now.")
         return
-    det = f"{app}_{req}"
-    with open(r"config\req.txt") as file:
-        if det in str(file.readlines()):
-            await ctx.send("This is already a requirement.")
-            return
-        else:
-            with open("req.txt", "a") as file:
-                file.write(det)
-            await ctx.send(f"Users will now require {await return_name_of_role(req)} to apply for {app}.")
 
-@bot.command(name="remove_req") 
+    if app != None:
+        det = f"{app}_{req}"
+        with open(r"config\req.txt") as file:
+            if det in str(file.readlines()):
+                await ctx.send("This is already a requirement.")
+                return
+            else:
+                with open("req.txt", "a") as file:
+                    file.write(det)
+                await ctx.send(f"Users will now require {await return_name_of_role(req)} to apply for {app}.")
+    else:
+        det = f"general_{req}"
+        with open(r"config\req.txt") as file:
+            if det in str(file.readlines()):
+                await ctx.send("This is already a requirement.")
+                return
+            else:
+                with open("req.txt", "a") as file:
+                    file.write(det)
+                await ctx.send(f"Users will now require {await return_name_of_role(req)} to apply for any app.")
+
+
+@bot.command(name="remove_req", aliases=['rr']) 
 @commands.is_owner()
 async def remove_req(ctx, app, req):
     req = get_id_from_mention(req)
@@ -512,43 +680,21 @@ async def remove_req(ctx, app, req):
                 f.write(file_source.replace(f"{det}", ""))
             await ctx.send(f"Users will no longer require {await return_name_of_role(req)} to apply for {app}.")
 
-@bot.command(name="global_blacklist", aliases=['gbl'])
-@commands.is_owner()
-async def global_blacklist(ctx, id):
-    try:
-        bot.fetch_user(id)
-        write_global_blacklist_user(id)
-    except HTTPException:
-        await ctx.send("Error, could you please re-run the command")
-    except NotFound:
-        write_global_blacklist_role(id)
-
-@bot.command(name="global_whitelist", aliases=['gwl'])
-@commands.is_owner()
-async def global_whitelist(ctx, id):
-    try:
-        bot.fetch_user(id)
-        write_global_whitelist_user(id)
-    except HTTPException:
-        await ctx.send("Error, could you please re-run the command")
-    except NotFound:
-        write_global_whitelist_role(id)
-
-@bot.command(name="add_owner")
+@bot.command(name="add_owner", aliases=['ao'])
 @commands.is_owner()
 async def add_owner(ctx, id):
     id = get_id_from_mention(id)
     with open(r"config\owners.txt", "a") as file:
         file.write(id)
 
-@bot.command(name="rem_owner")
+@bot.command(name="rem_owner", aliases=['ro'])
 @commands.is_owner()
 async def add_owner(ctx, id):
     with open(r"config\owners.txt", "a") as file:
         file_source = file.read()
         file.write(file_source.replace(f"{id}", ""))
 
-@bot.command(name="set_prefix")
+@bot.command(name="set_prefix", aliases=['sp'])
 async def set_prefix(ctx, new_prefix):
     with open(r"config\prefix.txt", "w") as file:
         file.write(new_prefix)
@@ -645,7 +791,7 @@ async def dump_req(ctx, cat=None):
                         emb.add_field(name=x[0], value=(await return_name_of_role(x[1])), inline=False)
                 await ctx.send(embed=emb)
 
-@bot.command(name="write_hier")
+@bot.command(name="write_hier", aliases=['wh'])
 @commands.is_owner()
 async def write_hier(ctx):
     if str(ctx.message).replace("`", "") != "" or str(ctx.message).replace("`", "") != "\n":
@@ -787,4 +933,3 @@ async def enable(ctx, command):
 
 
 bot.run(token)
-# ODQzNzc0MDYxODY3ODI3MjIw.YKIv1A.UOAwLrxYtOaq4wLjnQSoSMMmdX4
