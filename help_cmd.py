@@ -142,32 +142,138 @@ def help_cmd():
             """, inline=False)
         await ctx.send(embed=em)
 
+    @help.command(aliases=['ao'])
+    async def add_owner(ctx):
+        em = discord.Embed(title="`add_owner` command help", description="Detailed help on the `add_owner` command.")
+        em.add_field(name="aliases", value="This command has one alias: `ao`", inline=False)
+        em.add_field(name="Usage", value="Makes a user, the owner of the bot. This user will now be able to access ALL THE admin commands.", inline=False)
+        em.add_field(name="Syntax", value=f"""
+            This command takes a single argument, that is, the user mention or id:
+            1. {get_prefix()}add_owner @user
+            2. {get_prefix()}ao user_id
+
+            Note: Read the usage of this command again. Also requires bot restart to take effetc
+            """, inline=False)
+        await ctx.send(embed=em)
+    @help.command(aliases=['ro'])
+    async def rem_owner(ctx):
+        em = discord.Embed(title="`rem_owner` command help", description="Detailed help on the `rem_owner` command.")
+        em.add_field(name="aliases", value="This command has one alias: `ro`", inline=False)
+        em.add_field(name="Usage", value="Removes a user from being a bot's owner.", inline=False)
+        em.add_field(name="Syntax", value=f"""
+            This command takes a single argument, that is, the user mention or id:
+            1. {get_prefix()}rem_owner @user
+            2. {get_prefix()}ro user_id
+
+            Note: Read the usage of this command again. Also requires bot restart to take effect.
+            """, inline=False)
+        await ctx.send(embed=em)
+
     @help.command()
+    async def accept(ctx):
+        em = discord.Embed(title="`accept` command help", description="Detailed help on the `accept` command.")
+        em.add_field(name="aliases", value="This command has no aliases.", inline=False)
+        em.add_field(name="Usage", value="Accept a user's application.", inline=False)
+        em.add_field(name="Syntax", value=f"""
+            This command takes a three arguments, first, application, then the user (by mention or id) and the third, which is optional, a message:
+            1. {get_prefix()}accept tmod @user be active
+            2. {get_prefix()}accept owner user_id 
+            """, inline=False)
+        await ctx.send(embed=em)
+    @help.command(aliases=['deny', 'decline'])
+    async def reject(ctx):
+        em = discord.Embed(title="`reject` command help", description="Detailed help on the `reject` command.")
+        em.add_field(name="aliases", value="This command has two aliases: `deny`, `decline`", inline=False)
+        em.add_field(name="Usage", value="Reject a user's application", inline=False)
+        em.add_field(name="Syntax", value=f"""
+            This command takes a three arguments, first, application, then the user (by mention or id) and the third, which is optional, a message:
+            1. {get_prefix()}reject tmod @user be active
+            2. {get_prefix()}deny owner user_id 
+            """, inline=False)
+        await ctx.send(embed=em)
+    @help.command()
+    async def consider(ctx):
+        em = discord.Embed(title="`consider` command help", description="Detailed help on the `consider` command.")
+        em.add_field(name="aliases", value="This command has no aliases.", inline=False)
+        em.add_field(name="Usage", value="Consider a user's application", inline=False)
+        em.add_field(name="Syntax", value=f"""
+            This command takes a three arguments, first, application, then the user (by mention or id) and the third, which is optional, a message:
+            1. {get_prefix()}consider tmod @user I might accept you if you are active more
+            2. {get_prefix()}consider gaw_man user_id donate more perhaps 
+            """, inline=False)
+        await ctx.send(embed=em)
+
+    @help.command(aliases=['dump', 'questions', 'dumpq'])
     async def dump_questions(ctx):
-        em = discord.Embed(title="dump_questions command help", description="Detailed help on the `dump_questions` command.")
+        em = discord.Embed(title="`dump_questions` command help", description="Detailed help on the `dump_questions` command.")
         em.add_field(name="aliases", value="This command has three aliases: `dump`, `questions`, and `dumpq`", inline=False)
         em.add_field(name="Usage", value="Returns the questions present in a category, if any.", inline=False)
-        em.add_field(name="Syntax", value=f"This command takes a single argument, that is, the category argument\You must give the exact name of the category: {get_prefix()}dump_questions dank", inline=False)
+        em.add_field(name="Syntax", value=f"""
+            This command takes a single argument, that is, the category argument which is optional
+            You must give the exact name of the category:
+            1. {get_prefix()}dump_questions dank
+            2. {get_prefix()}dumpq
+
+            Note: The second one will result in all the questions stored, being sent.
+            """, inline=False)
         await ctx.send(embed=em)
+    @help.command(aliases=['dumpr', 'requirements', 'reqs'])
+    async def dump_req(ctx):
+        em = discord.Embed(title="`dump_req` command help", description="Detailed help on the `dump_req` command.")
+        em.add_field(name="aliases", value="This command has three aliases: `dump`, `requirements`, and `dumpr`", inline=False)
+        em.add_field(name="Usage", value="Returns the requirements for a particulat application, if any.", inline=False)
+        em.add_field(name="Syntax", value=f"""
+            This command takes a single argument, that is, the application argument which is optional
+            You must give the exact name of the application:
+            {get_prefix()}dump_questions tmod
+            {get_prefix()}dumpq general
+
+            Note: The second one will result in all the requirements stored, being sent.
+            """, inline=False)
+        await ctx.send(embed=em)
+
+    @help.command(aliases=['sp', 'prefix'])
+    async def set_prefix(ctx):
+        em = discord.Embed(title="`set_prefix` command help", description="Detailed help on the `set_prefix` command.")
+        em.add_field(name="aliases", value="This command has two aliases: `sp` and `prefix`", inline=False)
+        em.add_field(name="Usage", value="Change the bot's prefix.", inline=False)
+        em.add_field(name="Syntax", value=f"""
+            This command takes a single argument, that is, the new prefix:
+            1. {get_prefix()}set_prefix ?!?
+            2. {get_prefix()}sp !!
+
+            Note: Ping the bot to know it's current prefix.
+            """, inline=False)
+        await ctx.send(embed=em)
+
     @help.command()
-    async def dump(ctx):
-        em = discord.Embed(title="dump_questions command help", description="Detailed help on the `dump_questions` command.")
-        em.add_field(name="aliases", value="This command has three aliases: `dump`, `questions`, and `dumpq`", inline=False)
-        em.add_field(name="Usage", value="Returns the questions present in a category, if any.", inline=False)
-        em.add_field(name="Syntax", value=f"This command takes a single argument, that is, the category argument\You must give the exact name of the category: {get_prefix()}dump dank", inline=False)
+    async def toggle(ctx):
+        em = discord.Embed(title="`toggle` command help", description="Detailed help on the `toggle` command.")
+        em.add_field(name="aliases", value="This command has no aliases.", inline=False)
+        em.add_field(name="Usage", value="toggle an application on and off", inline=False)
+        em.add_field(name="Syntax", value=f"""
+            This command takes two arguments, that is, on or off, and the app name:
+            1. {get_prefix()}toggle off tmod
+            2. {get_prefix()}toggle on owner
+            """, inline=False)
         await ctx.send(embed=em)
-    @help.command
-    async def dumpq(ctx):
-        em = discord.Embed(title="dump_questions command help", description="Detailed help on the `dump_questions` command.")
-        em.add_field(name="aliases", value="This command has three aliases: `dump`, `questions`, and `dumpq`", inline=False)
-        em.add_field(name="Usage", value="Returns the questions present in a category, if any.", inline=False)
-        em.add_field(name="Syntax", value=f"This command takes a single argument, that is, the category argument\You must give the exact name of the category: {get_prefix()}dumpq dank", inline=False)
+
+    @help.command(aliases=['wh', 'hier'])
+    async def write_hier(ctx):
+        em = discord.Embed(title="`write_hier` command help", description="Detailed help on the `write_hier` command.")
+        em.add_field(name="aliases", value="This command has two aliases: `wh` and `hier`.", inline=False)
+        em.add_field(name="Usage", value="Write the application hierarchy.", inline=False)
+        em.add_field(name="Syntax", value=f"""
+            This command takes a single argument, that is the rest of the entire message, in triple backticks, the new hierarchy:
+            {get_prefix()}wh
+            ```
+            general:
+                bot_mod:
+                tmod:
+            finishing:
+            ```
+
+            Note: This will result in first, the general questions being asked, then either bot_mod or tmod category questions, and lastly, the finishing category questions.
+            The user will get a choice as to answer questions for bot_mod or tmod.
+            """, inline=False)
         await ctx.send(embed=em)
-    @help.command()
-    async def questions(ctx):
-        em = discord.Embed(title="dump_questions command help", description="Detailed help on the `dump_questions` command.")
-        em.add_field(name="aliases", value="This command has three aliases: `dump`, `questions`, and `dumpq`", inline=False)
-        em.add_field(name="Usage", value="Returns the questions present in a category, if any.", inline=False)
-        em.add_field(name="Syntax", value=f"This command takes a single argument, that is, the category argument\You must give the exact name of the category: {get_prefix()}questions dank", inline=False)
-        await ctx.send(embed=em)
-help_cmd()
