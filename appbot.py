@@ -1,4 +1,5 @@
 import asyncio, discord, os, sys
+from re import L
 from typing import ContextManager
 from logging import exception
 from asyncio import queues
@@ -35,10 +36,10 @@ def get_log_channel():
         x = int(file.read())
     return x
 
-async def log(content, usr=None):
+async def log(content, ctx=None):
     dsc_content = f"""
     ```ini
-[ {usr} ]
+[ {ctx.author.id} | {ctx.author.name} ]
 
 {content}```
     """
@@ -553,22 +554,22 @@ async def return_name_of_user(id):
         except HTTPException:
             return("Run me again")
 
-def get_app_role(app):
-    with open(r"config\app_role.txt") as file:
-        if app not in file.read():
-            return
-        else:
-            for a in file.readlines():
-                if app in a:
-                    return (a.split("_"))[-1]
+# def get_app_role(app):
+#     with open(r"config\app_role.txt") as file:
+#         if app not in file.read():
+#             return
+#         else:
+#             for a in file.readlines():
+#                 if app in a:
+#                     return (a.split("_"))[-1]
 
-async def acc_app(ctx, app, usrid):
-    try:
-        usr = await bot.get_user(usrid)
-        rl = get(ctx.guild.roles, id=(int(get_app_role(app))))
-        await usr.add_roles(rl)
-    except:
-        pass
+# async def acc_app(ctx, app, usrid):
+#     try:
+#         usr = await bot.get_user(usrid)
+#         rl = get(ctx.guild.roles, id=(int(get_app_role(app))))
+#         await usr.add_roles(rl)
+#     except:
+#         pass
 
 def write_answer(usr, app, ques, ans):
     with open(fr"answers\{usr}_{app}.txt", "a") as file:
@@ -815,7 +816,7 @@ async def set_log_channel(ctx, channel):
                     try:
                         write_log_channel(str(channel))
                         await ctx.send(f"I configured <#{channel}> to log everything other than applications!")
-                        asyncio.create_task(log(f"{ctx.author.id} : {ctx.author.name}\nset <#{channel}> as log channel"))
+                        asyncio.create_task(log(f"set <#{channel}> as log channel", ctx))
                     except Exception as e:
                         await ctx.send(e)
                         
@@ -852,7 +853,7 @@ async def set_app_channel(ctx, chid):
                     try:
                         write_applog(str(channel))
                         await ctx.send(f"I configured <#{channel}> to log applications!")
-                        asyncio.create_task(log(f"{ctx.author.id} : {ctx.author.name}\nset <#{channel}> as application log channel"))
+                        asyncio.create_task(log(f"set <#{channel}> as log applications", ctx))
                     except Exception as e:
                         await ctx.send(e)
                         
@@ -879,12 +880,11 @@ async def add_question(ctx, cat, *, ques):
     try:
         if add_question_func(cat, ques):
             await ctx.send(f"Added question `{raw_ques}` in category `{cat}`")
-            asyncio.create_task(log(f"{ctx.author.id} : {ctx.author.name}\nadded a question `{raw_ques}` in category `{cat}`"))
+            asyncio.create_task(log(f"Ddded a question `{raw_ques}` in category `{cat}`", ctx))
         else:
             await ctx.send("Idk some error occured")
     except Exception as e:
         await ctx.send(e)
-        asyncio.create_task(log(f"{e}"))
 
 
 @bot.command(name="rem_question", aliases = ["rem", "remove", 'rq', "remq"])
@@ -898,12 +898,11 @@ async def rem_question(ctx, cat, *, ques):
     try:
         if remove_question(cat, ques):
             await ctx.send(f"Removed question `{raw_ques}` in category `{cat}`")
-            asyncio.create_task(log(f"{ctx.author.id} : {ctx.author.name}\nremoved a question `{raw_ques}` from category `{cat}`"))
+            asyncio.create_task(log(f"removed a question `{raw_ques}` from category `{cat}`", ctx))
         else:
             await ctx.send("idk some error came oof.")
     except Exception as e:
         await ctx.send(e)
-        asyncio.create_task(log(f"{e}"))
 
 @bot.command(name="whitelist", aliases=['wl'])
 @commands.is_owner()
@@ -919,7 +918,7 @@ async def whitelist(ctx, id, app=None):
         try:
             if write_whitelist_role(id, app):
                 await ctx.send(f"Whitelist role {id} : {await return_name_of_role(id)}")
-                asyncio.create_task(log(f"{ctx.author.id} : {ctx.author.name}\nWhitelisted role {id} : {return_name_of_role(id)}"))
+                asyncio.create_task(log(f"Whitelisted role {id} : {return_name_of_role(id)}", ctx))
             else:
                 await ctx.send("Already Whitelisted")
         except HTTPException:
@@ -927,7 +926,7 @@ async def whitelist(ctx, id, app=None):
         return
     if write_whitelist_user(id, app):
         await ctx.send(f"Whitelisted user {id} : {await return_name_of_user(id)}")
-        asyncio.create_task(log(f"{ctx.author.id} : {ctx.author.name}\nWhitelisted user {id} : {await return_name_of_user(id)}"))
+        asyncio.create_task(log(f"Whitelisted user {id} : {await return_name_of_user(id)}", ctx))
     else:
         await ctx.send("Already whitelisted?")
 
@@ -944,7 +943,7 @@ async def blacklist(ctx, id, app=None):
         try:
             if write_blacklist_role(id, app):
                 await ctx.send(f"Blacklisted role {id} : {await return_name_of_role(id)}")
-                asyncio.create_task(log(f"{ctx.author.id} : {ctx.author.name}\nblacklisted role {id} : {return_name_of_role(id)}"))
+                asyncio.create_task(log(f"Blacklisted role {id} : {return_name_of_role(id)}", ctx))
             else:
                 await ctx.send("Already Blacklisted")
 
@@ -952,7 +951,7 @@ async def blacklist(ctx, id, app=None):
             await ctx.send("Error, could you please re-run the command")
     if write_blacklist_user(id, app):
         await ctx.send(f"Blacklisted user {id} : {await return_name_of_user(id)}")
-        asyncio.create_task(log(f"{ctx.author.id} : {ctx.author.name}\nblacklisted user {id} : {await return_name_of_user(id)}"))
+        asyncio.create_task(log(f"Blacklisted user {id} : {await return_name_of_user(id)}", ctx))
     else:
         await ctx.send("Already Blacklisted")
 
@@ -983,6 +982,7 @@ async def add_req(ctx, req, app=None):
             with open("req.txt", "a") as file:
                 file.write(det)
             await ctx.send(f"Users will now require {await return_name_of_role(req)} to apply for {app}.")
+            asyncio.create_task(f"Added role requirement of {await return_name_of_role(req)} to apply for {app}", ctx)
 
 
 @bot.command(name="remove_req", aliases=['rr']) 
@@ -1014,16 +1014,17 @@ async def remove_req(ctx, app, req):
             with open(r"config\req.txt", "r+") as f:
                 f.write(file_source.replace(f"{det}", ""))
             await ctx.send(f"Users will no longer require {await return_name_of_role(req)} to apply for {app}.")
+            asyncio.create_task(f"Removed role requirement of {await return_name_of_role(req)} to apply for {app}", ctx)
 
 @bot.command(name="add_owner", aliases=['ao'])
 @commands.is_owner()
 async def add_owner(ctx, id):
+    id = get_id_from_mention(id)
     try:
-        id = get_id_from_mention(id)
         with open(r"config\owners.txt", "a") as file:
             file.write(str(id))
-        await ctx.send("done")
-        
+        await ctx.send(f"Added user {id} : {return_name_of_user(id)} as owner. Restart required.")
+        asyncio.create_task(log(f"Added user {id} : {return_name_of_user(id)} as owner.", ctx))
     except Exception as e:
         await ctx.send(e)
 @bot.command(name="rem_owner", aliases=['ro'])
@@ -1035,12 +1036,11 @@ async def add_owner(ctx, id):
             file_source = file.read()
         with open(r"config\owners.txt", "a") as file:
             file.write(file_source.replace(f"{id}", ""))
+        await ctx.send(f"Removed user {id} : {return_name_of_user(id)} from owner. Restart required.")
+        asyncio.create_task(log(f"Removed user {id} : {return_name_of_user(id)} from owner.", ctx))
+
     except Exception as e:
         await ctx.send(e)
-@bot.command(name="set_prefix", aliases=['sp'])
-async def set_prefix(ctx, new_prefix):
-    with open(r"config\prefix.txt", "w") as file:
-        file.write(new_prefix)
 
 @bot.command(name="consider")
 async def consider(ctx, app, usrid, msg=None):
@@ -1049,7 +1049,7 @@ async def consider(ctx, app, usrid, msg=None):
         await usr.send(f"Your application for {app} is being considered. Also, {msg}")
     else:
         await usr.send(f"Your application for {app} is being considered.")
-    asyncio.create_task(log(f"{ctx.author.id} ({ctx.author.name}) considered {usrid}'s application for {app}"))
+    asyncio.create_task(log(f"Considered {usrid}'s application for {app}", ctx))
 
 @bot.command(name="accept")
 async def consider(ctx, app, usrid, *, msg=None):
@@ -1058,19 +1058,23 @@ async def consider(ctx, app, usrid, *, msg=None):
         await usr.send(f"Your application for {app} has been accepted. Also, {msg}")
     else:
         await usr.send(f"Your application for {app} has been accepted.")
-    try:
-        await acc_app(ctx, app, usrid)
-        await ctx.send("Added role to user")
-    except Exception as e:
-        await ctx.send(f"error: {e}")
+    await ctx.send(f"Application for {app} of user {usrid} : {return_name_of_user(id)} has been accepted")
+    asyncio.create_task(log(f"Application for {app} of user {usrid} : {return_name_of_user(id)} has been accepted", ctx))
+    # try:
+    #     await acc_app(ctx, app, usrid)
+    #     await ctx.send("Added role to user")
+    # except Exception as e:
+    #     await ctx.send(f"error: {e}")
 
 @bot.command(name="reject", aliases=["deny", "decline"])
-async def consider(app, usrid, msg=None):
+async def consider(ctx, app, usrid, msg=None):
     usr = bot.get_user(usrid)
     if msg != None:
         await usr.send(f"Your application for {app} has been rejected. Also, {msg}")
     else:
         await usr.send(f"Your application for {app} has been rejected.")
+    await ctx.send(f"Application for {app} of user {usrid} : {return_name_of_user(id)} has been rejected")
+    asyncio.create_task(log(f"Application for {app} of user {usrid} : {return_name_of_user(id)} has been rejected", ctx))
 
 
 ## still work
@@ -1187,6 +1191,10 @@ async def dump_req(ctx, cat=None):
 # Still working on them
 
 
+@bot.command(name="set_prefix", aliases=['sp'])
+async def set_prefix(ctx, new_prefix):
+    with open(r"config\prefix.txt", "w") as file:
+        file.write(new_prefix)
 
 
 
