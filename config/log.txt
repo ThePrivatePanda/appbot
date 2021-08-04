@@ -83,4 +83,129 @@ blacklisted user 296865872772071424 : Vocabo736147895039819797 : chliste
 Whitelisted user 296865872772071424 : VocaboCame online736147895039819797 : chliste
 blacklisted user 296865872772071424 : Vocabo736147895039819797 : chliste
 blacklisted user 296865872772071424 : Vocabo736147895039819797 : chliste
-Whitelisted user 296865872772071424 : Vocabo736147895039819797 : chliste restarted meCame online736147895039819797 : chliste restarted meCame online736147895039819797 : chliste restarted meCame online736147895039819797 : chliste restarted meCame onlineCame online736147895039819797 : chliste restarted meCame onlineCame onlineCame onlineCame onlineCame onlineRestartCame online
+Whitelisted user 296865872772071424 : Vocabo736147895039819797 : chliste restarted meCame online736147895039819797 : chliste restarted meCame online736147895039819797 : chliste restarted meCame online736147895039819797 : chliste restarted meCame onlineCame online736147895039819797 : chliste restarted meCame onlineCame onlineCame onlineCame onlineCame onlineRestartCame onlineRestart
+cCame online
+Came online736147895039819797 | chliste
+Restart
+Came online736147895039819797 | chliste
+Restart
+Came online736147895039819797 | chliste
+Restart
+Came online736147895039819797 | chliste
+Restart
+Came online
+Came online736147895039819797 | chliste
+Restart
+Came online736147895039819797 | chliste
+set <#868023870660169728> as log channel
+Came online736147895039819797 | chliste
+set 872128252163014666 as log channel
+Came online736147895039819797 | chliste
+set 868023870660169728 as log channel736147895039819797 | chliste
+set 872128252163014666 as log channel736147895039819797 | chliste
+set 872128252163014666 as log applications736147895039819797 | chliste
+set 868023870660169728 as log applications736147895039819797 | chliste
+Added a question `skem` in category `skem`736147895039819797 | chliste
+Restart
+Came online736147895039819797 | chliste
+Added question "oof" in category "skem"736147895039819797 | chliste
+Removed a question "skem" from category "skem"736147895039819797 | chliste
+Removed a question "oof" from category "skem"
+Came online736147895039819797 | chliste
+Removed question "skem" from category "skem"736147895039819797 | chliste
+Removed question "skem" from category "skem"
+Came online736147895039819797 | chliste
+Restart
+Came online736147895039819797 | chliste
+Added question "skem" in category "general"736147895039819797 | chliste
+Restart
+Came online
+Came online
+Came online736147895039819797 | chliste
+Added question "skem" in category "skem"736147895039819797 | chliste
+Added question "skem" in category "owa"736147895039819797 | chliste
+Removed question "skem" from category "skem"736147895039819797 | chliste
+Added question "skem" in category "skem"736147895039819797 | chliste
+Added question "owa" in category "skem"736147895039819797 | chliste
+Removed question "skem" from category "skem"736147895039819797 | chliste
+Added question "how you is?
+good ok
+no" in category "skem"
+Came online736147895039819797 | chliste
+Added question "how you is?
+good ok
+no" in category "skem"
+Came online736147895039819797 | chliste
+Added question "how you is?
+good ok
+no" in category "skem"
+Came online736147895039819797 | chliste
+Added question "how you is?\ngood ok\nno\nAppBot\nBOT\n — Today at 12:13" in category "skem"736147895039819797 | chliste
+set 797428226011693066 as log channel736147895039819797 | chliste
+Blacklisted user 788355410163269642 : 404736147895039819797 | chliste
+Added question "sahil noob?\nyes\nno" in category "is"736147895039819797 | chliste
+Restart
+Came online736147895039819797 | chliste
+Added question "hai ye" in category "skem"736147895039819797 | chliste
+Added question "elo\n1\n2" in category "skem"736147895039819797 | chliste
+Restart
+Came online736147895039819797 | chliste
+Added question "skem{new_line}skem{new_line}skem" in category "skem"
+Came online736147895039819797 | chliste
+set 793447452195684392 as log channel736147895039819797 | chliste
+set 793447452195684392 as log applications
+Came online
+Came online
+Came online
+Came online
+Came online736147895039819797 | chliste
+Blacklisted role 788355410163269642 : <coroutine object return_name_of_role at 0x000001FE953B5E40>
+Came online736147895039819797 | chliste
+Blacklisted role 788355410163269642 : Head Staff
+Came online736147895039819797 | chliste
+Blacklisted role 788355410163269642 : Head Staff736147895039819797 | chliste
+Restart
+Came online736147895039819797 | chliste
+Blacklisted role 788355410163269642 : Head Staff for app tm
+Came online736147895039819797 | chliste
+Restart
+Came online736147895039819797 | chliste
+Whitelisted role 788355410163269642 : Head Staff globally736147895039819797 | chliste
+Blacklisted role `788355410163269642 : Head Staff` globally736147895039819797 | chliste
+Blacklisted role `788355410163269642 : Head Staff` for app `tmod`736147895039819797 | chliste
+Whitelisted role 788355410163269642 : Head Staff globally736147895039819797 | chliste
+Whitelisted role 788355410163269642 : Head Staff globally736147895039819797 | chliste
+Whitelisted role 788355410163269642 : Head Staff for app tmod736147895039819797 | chliste
+Whitelisted role 788355410163269642 : Head Staff globally736147895039819797 | chliste
+Whitelisted role 788355410163269642 : Head Staff for app tmod736147895039819797 | chliste
+Restart
+Came online736147895039819797 | chliste
+Whitelisted role 788355410163269642 : Head Staff globally736147895039819797 | chliste
+Whitelisted role 788355410163269642 : Head Staff for app tmod736147895039819797 | chliste
+Blacklisted user `694413860299604008 : Alpaca` globally736147895039819797 | chliste
+Blacklisted user `694413860299604008 : Alpaca` for app `tmod`736147895039819797 | chliste
+Whitelisted user 694413860299604008 : Alpaca globally736147895039819797 | chliste
+Blacklisted user `694413860299604008 : Alpaca` globally736147895039819797 | chliste
+Whitelisted user 694413860299604008 : Alpaca for app tmod
+Came online736147895039819797 | chliste
+Whitelisted user 694413860299604008 : Alpaca globally736147895039819797 | chliste
+Whitelisted role 788355410163269642 : Head Staff globally
+Came online
+Came online
+Came online
+Came online
+Came online
+Came online
+Came online
+Came online
+Came online736147895039819797 | chliste
+Whitelisted role 788355410163269642 : Head Staff globally736147895039819797 | chliste
+Blacklisted role `788355410163269642 : Head Staff` globally736147895039819797 | chliste
+Whitelisted role 788355410163269642 : Head Staff for app tmod736147895039819797 | chliste
+Blacklisted role `788355410163269642 : Head Staff` globally736147895039819797 | chliste
+Whitelisted role 788355410163269642 : Head Staff globally
+Came online736147895039819797 | chliste
+Blacklisted role `788355410163269642 : Head Staff` globally736147895039819797 | chliste
+Whitelisted role 788355410163269642 : Head Staff for app tmod736147895039819797 | chliste
+Blacklisted role `788355410163269642 : Head Staff` for app `owner`736147895039819797 | chliste
+Whitelisted role 788355410163269642 : Head Staff globally

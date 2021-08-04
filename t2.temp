@@ -1,0 +1,33 @@
+
+@bot.command(name="blacklist", aliases=['bl'])
+@commands.is_owner()
+async def blacklist(ctx, id, app=None):
+    id = get_id_from_mention(id)
+    try:
+        await bot.fetch_user(id)
+        pass
+    except NotFound:
+        try:
+            if write_blacklist_role(id, app):
+                if app is not None:
+                    await ctx.send(f"Blacklisted role `{id} : {await return_name_of_role(id)}` for app `{app}`")
+                    asyncio.create_task(log(f"Blacklisted role `{id} : {await return_name_of_role(id)}` for app `{app}`", ctx))
+                else:
+                    await ctx.send(f"Blacklisted role `{id} : {await return_name_of_role(id)}` globally.")
+                    asyncio.create_task(log(f"Blacklisted role `{id} : {await return_name_of_role(id)}` globally", ctx))
+
+            else:
+                await ctx.send("Already Blacklisted")
+            return
+        except HTTPException:
+            await ctx.send("Error, could you please re-run the command")
+            return
+    if write_blacklist_user(id, app):
+        if app is not None:
+            await ctx.send(f"Blacklisted user `{id} : {await return_name_of_user(id)}` for app `{app}`")
+            asyncio.create_task(log(f"Blacklisted user `{id} : {await return_name_of_user(id)}` for app `{app}`", ctx))
+        else:
+            await ctx.send(f"Blacklisted user `{id} : {await return_name_of_user(id)}` globally")
+            asyncio.create_task(log(f"Blacklisted user `{id} : {await return_name_of_user(id)}` globally", ctx))
+    else:
+        await ctx.send("Already Blacklisted")

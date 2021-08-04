@@ -1,13 +1,8 @@
 import asyncio, discord, os, sys
-from re import L
-from typing import ContextManager
-from logging import exception
-from asyncio import queues
-from discord import http
 from discord.errors import Forbidden, HTTPException, NotFound
 from collections import Counter
 from discord.ext import commands
-from discord.utils import get
+# from discord.utils import get
 em = discord.Embed(title="Test Embed", description="Just ensuring i can send messages and embeds here")
 
 token = sys.argv[1]
@@ -28,23 +23,41 @@ bot = commands.Bot(command_prefix=get_prefix(), owner_ids=get_owners())
 bot.remove_command('help')
 bot.case_insensitive = True
 
-@bot.command(name="test")
-async def test(ctx):
-    await ctx.send(bot.owner_ids)
+
 def get_log_channel():
     with open(r"config\logch.txt") as file:
         x = int(file.read())
     return x
 
+
+
+
+
+
+
+
+
 async def log(content, ctx=None):
-    dsc_content = f"""
-    ```ini
+    if ctx is not None:
+        dsc_content = f"""
+        ```ini
 [ {ctx.author.id} | {ctx.author.name} ]
 
 {content}```
-    """
+        """
+        content = f"{ctx.author.id} | {ctx.author.name}\n{content}"
+
+
+    else:
+        content = f"\n{content}"
+        dsc_content = f"""
+        ```ini
+[ None ]
+{content}```
+        """
+
+
     try:
-        content = f"{usr}\n{content}"
         with open(r"config\log.txt", "a") as file:
             file.write(content)
         x = get_log_channel()
@@ -57,18 +70,31 @@ async def log(content, ctx=None):
             if ch != None:
                 await ch.send(dsc_content)
                 return
-        return False
     except Exception as e:
         print(e)
 
 
+
+
+
+
+
+
+def get_version():
+    with open(r"config\version.txt") as file:
+        return file.read().replace("\n", "")
+
+def write_version():
+    z = int(get_version())
+    with open(r"config\version.txt", "w") as file:
+        file.write(f"{z+1}")
+
 @bot.event
 async def on_ready():
     print("logged in")
-    ch = await bot.fetch_channel(843773991055654926)
+    ch = await bot.fetch_channel(get_log_channel())
     await ch.send("online")
     await asyncio.create_task(log("Came online"))
-guild = bot.get_guild(843773991055654923)
 
 @bot.listen()
 async def on_message(msg):
@@ -168,17 +194,17 @@ async def rem_question(ctx):
 @help.command(aliases=['bl'])
 async def blacklist(ctx):
     em = discord.Embed(title="`blacklist` command help", description="Detailed help on the `blacklist` command.")
-    em.add_field(name="aliases", value="This command has one alias: `bl`", inline=False)
+    em.add_field(name="Aliases", value="This command has one alias: `bl`", inline=False)
     em.add_field(name="Usage", value="Blacklist a role or user by id or mention, for a specific application or globally.", inline=False)
     em.add_field(name="Syntax", value=f"""
         This command takes two arguments, the first, the user or role mention or id, and the second, which is optional, the name of the application:
         ```
 
-1. {get_prefix()}blacklist @role tmod
-2. {get_prefix()}blacklist user_id owner
-3. {get_prefix()}blacklist user_id```
+{get_prefix()}blacklist @role tmod
+{get_prefix()}blacklist user_id owner
+{get_prefix()}blacklist user_id```
 
-        Note: The third one will result in a global blacklist of the user
+        Note: The last one will result in a global blacklist of the user
         """, inline=False)
     await ctx.send(embed=em)
 
@@ -186,16 +212,16 @@ async def blacklist(ctx):
 @help.command(aliases=['wl'])
 async def whitelist(ctx):
     em = discord.Embed(title="`whitelist` command help", description="Detailed help on the `whitelist` command.")
-    em.add_field(name="aliases", value="This command has one alias: `wl`", inline=False)
+    em.add_field(name="Aliases", value="This command has one alias: `wl`", inline=False)
     em.add_field(name="Usage", value="Whitelist a role or user by id or mention, for a specific application or globally.", inline=False)
     em.add_field(name="Syntax", value=f"""
         This command takes two arguments, the first, the user or role mention or id, and the second, which is optional, the name of the application:
         ```
-1. {get_prefix()}whitelist @role tmod
-2. {get_prefix()}whitelist user_id owner
-3. {get_prefix()}wl user_id```
+{get_prefix()}whitelist @role tmod
+{get_prefix()}whitelist user_id owner
+{get_prefix()}wl user_id```
         
-        Note: The third one will result in a global whitelist of the user
+        Note: The last one will result in a global whitelist of the user
         """, inline=False)
     await ctx.send(embed=em)
 
@@ -406,9 +432,16 @@ async def raise_er(ctx):
 #################### for good and happy working ##########################
 ##########################################################################
 
-
-
+def get_guild():
+    with open(r"config\guild.txt") as file:
+        return int(file.read())
 def add_question_func(cat, ques):
+    if os.path.exists(fr'questions\{cat}.txt'):
+        pass
+    else:
+        open(fr"questions\{cat}.txt", "w")
+        pass
+
     try:
         with open(fr"questions\{cat}.txt", "a") as file:
             file.write(ques)
@@ -416,12 +449,13 @@ def add_question_func(cat, ques):
     except Exception as e:
         return False
 
+
 def remove_question(cat, ques):
     try:
         with open(fr"questions\{cat}.txt") as file:
             file_source = file.read()
         with open(fr"questions\{cat}.txt", "w") as file:
-            file.write(file_source.replace(f"{ques}\n", ""))
+            file.write(file_source.replace(f"{ques}", ""))
         return True
     except:
         return False
@@ -467,27 +501,27 @@ def write_whitelist_role(rlid, app=None):
     rlid = get_id_from_mention(rlid)
     if app is not None:
         with open(r"bl\rl_blacklists.txt") as file:
-            if f"{app}_{rlid}\n" not in file.readlines():
+            if f"{app}_{rlid}" not in file.read():
                 return False
             else:
                 pass
         with open(r"bl\rl_blacklists.txt") as file:
             file_source = file.read()
 
-        with open(r"bl\rl_blacklists.txt", "r+") as f:
-            f.write(file_source.replace(f"gbl_{rlid}\n", ""))
+        with open(r"bl\rl_blacklists.txt", "w+") as f:
+            f.write(file_source.replace(f"{app}_{rlid}\n", ""))
             return True
     else:
         with open(r"bl\rl_blacklists.txt") as file:
-            if f"gbl_{rlid}\n" not in file.readlines():
+            if f"gbl_{rlid}" not in file.read():
                 return False
             else:
                 pass
         with open(r"bl\rl_blacklists.txt") as file:
             file_source = file.read()
 
-        with open(r"bl\rl_blacklists.txt", "r+") as f:
-            f.write(file_source.replace(f"{app}_{rlid}\n", ""))
+        with open(r"bl\rl_blacklists.txt", "w+") as f:
+            f.write(file_source.replace(f"gbl_{rlid}\n", ""))
             return True
 
 def write_blacklist_user(usrid, app=None):
@@ -519,7 +553,7 @@ def write_blacklist_role(rlid, app=None):
                 return False
             else:
                 pass
-        with open(r"b\rl_blacklists.txt", "a") as f:
+        with open(r"bl\rl_blacklists.txt", "a") as f:
             f.write(f"{app}_{rlid}\n")
             return True
     else:
@@ -529,11 +563,16 @@ def write_blacklist_role(rlid, app=None):
             else:
                 pass
 
-        with open(r"b\rl_blacklists.txt", "a") as f:
+        with open(r"bl\rl_blacklists.txt", "a") as f:
             f.write(f"gbl_{rlid}\n")
             return True
 
 def get_ques_addq(cat):
+    if os.path.exists(fr'questions\{cat}.txt'):
+        pass
+    else:
+        open(fr"questions\{cat}.txt", "w")
+        pass
     with open(fr"questions\{cat}.txt") as file:
         return file.readlines()
 
@@ -615,6 +654,7 @@ def build_ans_embed(usr, app):
 ##########################################################################
 
 async def return_name_of_role(id):
+    guild = bot.get_guild(get_guild())
     role = guild.get_role(id)
     return role.name
 
@@ -816,7 +856,7 @@ async def set_log_channel(ctx, channel):
                     try:
                         write_log_channel(str(channel))
                         await ctx.send(f"I configured <#{channel}> to log everything other than applications!")
-                        asyncio.create_task(log(f"set <#{channel}> as log channel", ctx))
+                        asyncio.create_task(log(f"set {channel} as log channel", ctx))
                     except Exception as e:
                         await ctx.send(e)
                         
@@ -853,7 +893,7 @@ async def set_app_channel(ctx, chid):
                     try:
                         write_applog(str(channel))
                         await ctx.send(f"I configured <#{channel}> to log applications!")
-                        asyncio.create_task(log(f"set <#{channel}> as log applications", ctx))
+                        asyncio.create_task(log(f"set {channel} as log applications", ctx))
                     except Exception as e:
                         await ctx.send(e)
                         
@@ -872,33 +912,36 @@ async def set_app_channel(ctx, chid):
 @bot.command(name="add_question", aliases = ["aq", "add", "addq"])
 @commands.is_owner()
 async def add_question(ctx, cat, *, ques):
-    raw_ques = ques
-    ques = f"{ques}\n"
+    x = ques.replace('\n','\\n')
+    dsp = x.replace("\\n", "{new_line}")
+    ques = f"{x}\n"
     if ques in get_ques_addq(cat):
         await ctx.send("Already a question")
         return
-    try:
-        if add_question_func(cat, ques):
-            await ctx.send(f"Added question `{raw_ques}` in category `{cat}`")
-            asyncio.create_task(log(f"Ddded a question `{raw_ques}` in category `{cat}`", ctx))
-        else:
-            await ctx.send("Idk some error occured")
-    except Exception as e:
-        await ctx.send(e)
+    else:
+        try:
+            if add_question_func(cat, ques):
+                await ctx.send(f"Added question `{dsp}` in category `{cat}`")
+                asyncio.create_task(log(f"Added question \"{dsp}\" in category \"{cat}\"", ctx))
+            else:
+                await ctx.send("Idk some error occured")
+        except Exception as e:
+            await ctx.send(e)
 
 
 @bot.command(name="rem_question", aliases = ["rem", "remove", 'rq', "remq"])
 @commands.is_owner()
 async def rem_question(ctx, cat, *, ques):
-    raw_ques = ques
-    ques = f"{ques}\n"
+    x = ques.replace('\n','\\n')
+    dsp = x.replace("\\n", "{new_line}")
+    ques = f"{x}\n"
     if ques not in get_ques_addq(cat):
         await ctx.send("Already not a question")
         return
     try:
         if remove_question(cat, ques):
-            await ctx.send(f"Removed question `{raw_ques}` in category `{cat}`")
-            asyncio.create_task(log(f"removed a question `{raw_ques}` from category `{cat}`", ctx))
+            await ctx.send(f"Removed question `{dsp}` in category `{cat}`")
+            asyncio.create_task(log(f"Removed question \"{dsp}\" from category \"{cat}\"", ctx))
         else:
             await ctx.send("idk some error came oof.")
     except Exception as e:
@@ -911,22 +954,28 @@ async def whitelist(ctx, id, app=None):
     try:
         await bot.fetch_user(id)
         pass    
-    except HTTPException:
-        await ctx.send("Error, could you please re-run the command")
-        return
     except NotFound:
         try:
             if write_whitelist_role(id, app):
-                await ctx.send(f"Whitelist role {id} : {await return_name_of_role(id)}")
-                asyncio.create_task(log(f"Whitelisted role {id} : {return_name_of_role(id)}", ctx))
+                if app is not None:
+                    await ctx.send(f"Whitelist role {id} : {await return_name_of_role(id)} for app {app}")
+                    asyncio.create_task(log(f"Whitelisted role {id} : {await return_name_of_role(id)} for app {app}", ctx))
+                else:
+                    await ctx.send(f"Whitelist role {id} : {await return_name_of_role(id)} globally")
+                    asyncio.create_task(log(f"Whitelisted role {id} : {await return_name_of_role(id)} globally", ctx))
+
             else:
                 await ctx.send("Already Whitelisted")
         except HTTPException:
             await ctx.send("Error, could you please re-run the command")
         return
     if write_whitelist_user(id, app):
-        await ctx.send(f"Whitelisted user {id} : {await return_name_of_user(id)}")
-        asyncio.create_task(log(f"Whitelisted user {id} : {await return_name_of_user(id)}", ctx))
+        if app is not None:
+            await ctx.send(f"Whitelisted user {id} : {await return_name_of_user(id)} for app {app}")
+            asyncio.create_task(log(f"Whitelisted user {id} : {await return_name_of_user(id)} for app {app}", ctx))
+        else:
+            await ctx.send(f"Whitelisted user {id} : {await return_name_of_user(id)} globally")
+            asyncio.create_task(log(f"Whitelisted user {id} : {await return_name_of_user(id)} globally", ctx))
     else:
         await ctx.send("Already whitelisted?")
 
@@ -937,21 +986,30 @@ async def blacklist(ctx, id, app=None):
     try:
         await bot.fetch_user(id)
         pass
-    except HTTPException:
-        await ctx.send("Error, could you please re-run the command")
     except NotFound:
         try:
             if write_blacklist_role(id, app):
-                await ctx.send(f"Blacklisted role {id} : {await return_name_of_role(id)}")
-                asyncio.create_task(log(f"Blacklisted role {id} : {return_name_of_role(id)}", ctx))
-            else:
-                await ctx.send("Already Blacklisted")
+                if app is not None:
+                    await ctx.send(f"Blacklisted role `{id} : {await return_name_of_role(id)}` for app `{app}`")
+                    asyncio.create_task(log(f"Blacklisted role `{id} : {await return_name_of_role(id)}` for app `{app}`", ctx))
+                else:
+                    await ctx.send(f"Blacklisted role `{id} : {await return_name_of_role(id)}` globally.")
+                    asyncio.create_task(log(f"Blacklisted role `{id} : {await return_name_of_role(id)}` globally", ctx))
 
+            else:
+
+                await ctx.send("Already Blacklisted")
+            return
         except HTTPException:
             await ctx.send("Error, could you please re-run the command")
+            return
     if write_blacklist_user(id, app):
-        await ctx.send(f"Blacklisted user {id} : {await return_name_of_user(id)}")
-        asyncio.create_task(log(f"Blacklisted user {id} : {await return_name_of_user(id)}", ctx))
+        if app is not None:
+            await ctx.send(f"Blacklisted user `{id} : {await return_name_of_user(id)}` for app `{app}`")
+            asyncio.create_task(log(f"Blacklisted user `{id} : {await return_name_of_user(id)}` for app `{app}`", ctx))
+        else:
+            await ctx.send(f"Blacklisted user `{id} : {await return_name_of_user(id)}` globally")
+            asyncio.create_task(log(f"Blacklisted user `{id} : {await return_name_of_user(id)}` globally", ctx))
     else:
         await ctx.send("Already Blacklisted")
 
@@ -960,6 +1018,7 @@ async def blacklist(ctx, id, app=None):
 async def add_req(ctx, req, app=None):
     req = get_id_from_mention(req)
     try:
+        guild = bot.get_guild(get_guild())
         guild.get_role(req)
         pass
     except HTTPException:
@@ -990,6 +1049,7 @@ async def add_req(ctx, req, app=None):
 async def remove_req(ctx, app, req):
     req = get_id_from_mention(req)
     try:
+        guild = bot.get_guild(get_guild())
         guild.get_role(req)
         pass
     except HTTPException:
@@ -1359,15 +1419,28 @@ def restart_bot():
 @commands.is_owner()
 async def restart(ctx):
     await ctx.send("Restarting the bot...")
-    await asyncio.create_task(log(f"Restart", f"{ctx.author.id} : {ctx.author.name}"))
+    write_version()
+    await asyncio.create_task(log(f"Restart", ctx))
     restart_bot()
 
 @bot.command(name="shutdown")
 @commands.is_owner()
 async def shutdown(ctx):
     await ctx.send("shutting down...")
-    await asyncio.create_task(log(f"Shut down", f"{ctx.author.id} : {ctx.author.name}"))
+    write_version()
+    await asyncio.create_task(log(f"Shut down", ctx))
     await bot.close()
 
+@bot.command(name="version")
+async def version(ctx):
+    await ctx.send(f"I am on version {get_version()} (counted since i first came to life).")
+    
+@bot.command(name="setguild")
+async def setguild(ctx, id):
+    id = get_id_from_mention(id)
+    with open(r"config\guild.txt", "w") as file:
+        file.write(id)
+    await ctx.send("done")
+
 bot.run(token)
-# # 
+# # ODQzNzc0MDYxODY3ODI3MjIw.YKIv1A.twi_T_DXtomdO5tBWoRIzuWLvr0
