@@ -2,6 +2,8 @@ import asyncio, discord, os, sys
 from discord.errors import Forbidden, HTTPException, NotFound
 from discord.ext import commands
 from collections import Counter
+
+from discord.gateway import DiscordClientWebSocketResponse
 # from discord.utils import get
 em = discord.Embed(title="Test Embed", description="Just ensuring i can send messages and embeds here")
 
@@ -50,22 +52,11 @@ def get_log_channel():
 
 async def log(content, ctx=None):
     if ctx is not None:
-        dsc_content = f"""
-        ```ini
-[ {ctx.author.id} | {ctx.author.name} ]
-
-{content}```
-        """
-        content = f"{ctx.author.id} | {ctx.author.name}\n{content}"
-
-
+        dsc_content = discord.Embed(title=content, description=f"{ctx.author.id} | {ctx.author.name}")
+        content = f"{ctx.author.id} | {ctx.author.name} | {content}"
     else:
-        content = f"\n{content}"
-        dsc_content = f"""
-        ```ini
-[ None ]
-{content}```
-        """
+        content = f"{content}\n"
+        dsc_content = discord.Embed(title=content, description=f"None")
 
 
     try:
@@ -74,12 +65,12 @@ async def log(content, ctx=None):
         x = get_log_channel()
         ch = bot.get_channel(x)
         if ch != None:
-            await ch.send(dsc_content)
+            await ch.send(embed=dsc_content)
             return
         else:
             ch = bot.fetch_channel(x)
             if ch != None:
-                await ch.send(dsc_content)
+                await ch.send(embed=dsc_content)
                 return
     except Exception as e:
         print(e)
@@ -117,329 +108,328 @@ async def on_message(msg):
 ################################## Help ##################################
 ################################# Command ################################
 ##########################################################################
+def help_cmd():
+    @bot.group(invoke_without_command=True)
+    async def help(ctx):
+        em = discord.Embed(title="Help Page", description=f"use {get_prefix()}help <command> for a more detailed help on the command.")
+        em.add_field(
+            name="Admin Commands", 
+            value=("""
+                1) set_log_channel: slc, setlog
+                2) set_app_channel: sac, setapp
+                3) add_question: add, aq, addq
+                4) rem_question: rem, remove, rq, remq
+                5) blacklist: bl
+                6) whitelist: wl
+                7) add_req: ar, addreq
+                8) remove_req: rr, remreq
+                9) add_owner: ao
+                10) rem_owner: ro
+                11) accept
+                12) reject: deny, decline
+                13) consider
+                14) dump_questions: dump, questions, dumpq
+                15) dump_req:dump1, requirements, reqs
+                16) set_prefix: sp, prefix
+                17) toggle
+                18) write_hier: wh, hier
+                """))
+        em.add_field(name="Public Commands", value="""
+                1) help
+                2) apply
+                3) raise_er
+                """)
+        await ctx.send(embed=em)
 
+    # SET CONFIG COMMANDS
+    @help.command(aliases=['slc', 'setlog'])
+    async def set_log_channel(ctx):
+        em = discord.Embed(title="`set_log_channel` command help", description="Detailed help on the `set_log_channel` command.")
+        em.add_field(name="Aliases", value="This command has two aliases: `slc` and `setlog`", inline=False)
+        em.add_field(name="Usage", value="This command will set the channel where logs will be written. Logs include commands used and status of applications.", inline=False)
+        em.add_field(name="Syntax", value=f"""
+            This command takes a single argument, that is, the channel argument
+            You can give the channel ID, or the channel mention:
+            ```
+    {get_prefix()}set_log_channel #channel
+    {get_prefix()}set_log_channel channel_id```
+            """, inline=False)
+        await ctx.send(embed=em)
+    @help.command(aliases=['sac', 'setapp'])
+    async def set_app_channel(ctx):
+        em = discord.Embed(title="`set_app_channel` command help", description="Detailed help on the `set_app_channel` command.")
+        em.add_field(name="Aliases", value="This command has two aliases: `sac` and `setapp`", inline=False)
+        em.add_field(name="Usage", value="Set the channel where completed applications appear.", inline=False)
+        em.add_field(name="Syntax", value=f"""
+            This command takes a single argument, that is, the channel argument
+            You can give the channel ID, or the channel mention:
+            ```
+    {get_prefix()}set_app_channel #channel
+    {get_prefix()}set_app_channel channel_id```
+            """, inline=False)
+        await ctx.send(embed=em)
 
-@bot.group(invoke_without_command=True)
-async def help(ctx):
-    em = discord.Embed(title="Help Page", description=f"use {get_prefix()}help <command> for a more detailed help on the command.")
-    em.add_field(
-        name="Admin Commands", 
-        value=("""
-            1) set_log_channel: slc, setlog
-            2) set_app_channel: sac, setapp
-            3) add_question: add, aq, addq
-            4) rem_question: rem, remove, rq, remq
-            5) blacklist: bl
-            6) whitelist: wl
-            7) add_req: ar, addreq
-            8) remove_req: rr, remreq
-            9) add_owner: ao
-            10) rem_owner: ro
-            11) accept
-            12) reject: deny, decline
-            13) consider
-            14) dump_questions: dump, questions, dumpq
-            15) dump_req:dump1, requirements, reqs
-            16) set_prefix: sp, prefix
-            17) toggle
-            18) write_hier: wh, hier
-            """))
-    em.add_field(name="Public Commands", value="""
-            1) help
-            2) apply
-            3) raise_er
-            """)
-    await ctx.send(embed=em)
+    # QUESTION MANAGEMENT COMMANDS
+    @help.command(aliases=['add', 'aq', 'addq'])
+    async def add_question(ctx):
+        em = discord.Embed(title="`add_question` command help", description="Detailed help on the `add_question` command.")
+        em.add_field(name="aliases", value="This command has three aliases: `add`, `aq` and `addq`", inline=False)
+        em.add_field(name="Usage", value="Adds a question to a category. Makes a category if there is no question in the category before.", inline=False)
+        em.add_field(name="Syntax", value=f"""
+            This command takes two arguments, those are, the category argument and the question itself:
+            ```
+    {get_prefix()}add_question dank What prestige level are you?
+    {get_prefix()}addq general How old can you be?```
+            """, inline=False)
+        await ctx.send(embed=em)
+    @help.command(aliases=['rem', 'remove', 'rq', 'remq'])
+    async def rem_question(ctx):
+        em = discord.Embed(title="`rem_question` command help", description="Detailed help on the `rem_question` command.")
+        em.add_field(name="aliases", value="This command has three aliases: `rem`, `remove` and `remq`", inline=False)
+        em.add_field(name="Usage", value="Removes a question from a category. Note: The question must be exactly as it appears.", inline=False)
+        em.add_field(name="Syntax", value=f"""
+            This command takes two arguments, those are, the category argument and the question itself:
+            ```
+    {get_prefix()}rem_question dank What prestige level are you?
+    {get_prefix()}rq general How old can you be?```
+            """, inline=False)
+        await ctx.send(embed=em)
 
-# SET CONFIG COMMANDS
-@help.command(aliases=['slc', 'setlog'])
-async def set_log_channel(ctx):
-    em = discord.Embed(title="`set_log_channel` command help", description="Detailed help on the `set_log_channel` command.")
-    em.add_field(name="Aliases", value="This command has two aliases: `slc` and `setlog`", inline=False)
-    em.add_field(name="Usage", value="This command will set the channel where logs will be written. Logs include commands used and status of applications.", inline=False)
-    em.add_field(name="Syntax", value=f"""
-        This command takes a single argument, that is, the channel argument
-        You can give the channel ID, or the channel mention:
-        ```
-{get_prefix()}set_log_channel #channel
-{get_prefix()}set_log_channel channel_id```
-        """, inline=False)
-    await ctx.send(embed=em)
-@help.command(aliases=['sac', 'setapp'])
-async def set_app_channel(ctx):
-    em = discord.Embed(title="`set_app_channel` command help", description="Detailed help on the `set_app_channel` command.")
-    em.add_field(name="Aliases", value="This command has two aliases: `sac` and `setapp`", inline=False)
-    em.add_field(name="Usage", value="Set the channel where completed applications appear.", inline=False)
-    em.add_field(name="Syntax", value=f"""
-        This command takes a single argument, that is, the channel argument
-        You can give the channel ID, or the channel mention:
-        ```
-{get_prefix()}set_app_channel #channel
-{get_prefix()}set_app_channel channel_id```
-        """, inline=False)
-    await ctx.send(embed=em)
+    @help.command(aliases=['bl'])
+    async def blacklist(ctx):
+        em = discord.Embed(title="`blacklist` command help", description="Detailed help on the `blacklist` command.")
+        em.add_field(name="Aliases", value="This command has one alias: `bl`", inline=False)
+        em.add_field(name="Usage", value="Blacklist a role or user by id or mention, for a specific application or globally.", inline=False)
+        em.add_field(name="Syntax", value=f"""
+            This command takes two arguments, the first, the user or role mention or id, and the second, which is optional, the name of the application:
+            ```
 
-# QUESTION MANAGEMENT COMMANDS
-@help.command(aliases=['add', 'aq', 'addq'])
-async def add_question(ctx):
-    em = discord.Embed(title="`add_question` command help", description="Detailed help on the `add_question` command.")
-    em.add_field(name="aliases", value="This command has three aliases: `add`, `aq` and `addq`", inline=False)
-    em.add_field(name="Usage", value="Adds a question to a category. Makes a category if there is no question in the category before.", inline=False)
-    em.add_field(name="Syntax", value=f"""
-        This command takes two arguments, those are, the category argument and the question itself:
-        ```
-{get_prefix()}add_question dank What prestige level are you?
-{get_prefix()}addq general How old can you be?```
-        """, inline=False)
-    await ctx.send(embed=em)
-@help.command(aliases=['rem', 'remove', 'rq', 'remq'])
-async def rem_question(ctx):
-    em = discord.Embed(title="`rem_question` command help", description="Detailed help on the `rem_question` command.")
-    em.add_field(name="aliases", value="This command has three aliases: `rem`, `remove` and `remq`", inline=False)
-    em.add_field(name="Usage", value="Removes a question from a category. Note: The question must be exactly as it appears.", inline=False)
-    em.add_field(name="Syntax", value=f"""
-        This command takes two arguments, those are, the category argument and the question itself:
-        ```
-{get_prefix()}rem_question dank What prestige level are you?
-{get_prefix()}rq general How old can you be?```
-        """, inline=False)
-    await ctx.send(embed=em)
+    {get_prefix()}blacklist @role tmod
+    {get_prefix()}blacklist user_id owner
+    {get_prefix()}blacklist user_id```
 
-@help.command(aliases=['bl'])
-async def blacklist(ctx):
-    em = discord.Embed(title="`blacklist` command help", description="Detailed help on the `blacklist` command.")
-    em.add_field(name="Aliases", value="This command has one alias: `bl`", inline=False)
-    em.add_field(name="Usage", value="Blacklist a role or user by id or mention, for a specific application or globally.", inline=False)
-    em.add_field(name="Syntax", value=f"""
-        This command takes two arguments, the first, the user or role mention or id, and the second, which is optional, the name of the application:
-        ```
+            Note: The last one will result in a global blacklist of the user
+            """, inline=False)
+        await ctx.send(embed=em)
 
-{get_prefix()}blacklist @role tmod
-{get_prefix()}blacklist user_id owner
-{get_prefix()}blacklist user_id```
+    # BLACKLISTING
+    @help.command(aliases=['wl'])
+    async def whitelist(ctx):
+        em = discord.Embed(title="`whitelist` command help", description="Detailed help on the `whitelist` command.")
+        em.add_field(name="Aliases", value="This command has one alias: `wl`", inline=False)
+        em.add_field(name="Usage", value="Whitelist a role or user by id or mention, for a specific application or globally.", inline=False)
+        em.add_field(name="Syntax", value=f"""
+            This command takes two arguments, the first, the user or role mention or id, and the second, which is optional, the name of the application:
+            ```
+    {get_prefix()}whitelist @role tmod
+    {get_prefix()}whitelist user_id owner
+    {get_prefix()}wl user_id```
+            
+            Note: The last one will result in a global whitelist of the user
+            """, inline=False)
+        await ctx.send(embed=em)
 
-        Note: The last one will result in a global blacklist of the user
-        """, inline=False)
-    await ctx.send(embed=em)
+    # REQUIREMENTS MANAGEMENT
+    @help.command(aliases=['ar', 'addreq'])
+    async def add_req(ctx):
+        em = discord.Embed(title="`add_req` command help", description="Detailed help on the `add_req` command.")
+        em.add_field(name="Aliases", value="This command has two aliases: `ar` and `addreq`", inline=False)
+        em.add_field(name="Usage", value="Add a role requirement to an application or globally.", inline=False)
+        em.add_field(name="Syntax", value=f"""
+            This command takes two arguments, the first, the role mention or id, and the second, which is optional, the name of the application:
+            ```
+    {get_prefix()}add_req @role tmod
+    {get_prefix()}add_req role_id owner
+    {get_prefix()}ar role_id```
+            
+            Note: The last one will result in role_id being a requirement for all applicatoins, i.e. a general req
+            """, inline=False)
+        await ctx.send(embed=em)
+    @help.command(aliases=['rr', 'remreq'])
+    async def remove_req(ctx):
+        em = discord.Embed(title="`remove_req` command help", description="Detailed help on the `remove_req` command.")
+        em.add_field(name="Aliases", value="This command has two aliases: `rr` and `remreq`", inline=False)
+        em.add_field(name="Usage", value="Remove a role requirement to an application or globally", inline=False)
+        em.add_field(name="Syntax", value=f"""
+            This command takes two arguments, the first, the role mention or id, and the second, which is optional, the name of the application:
+            ```
+    {get_prefix()}rem_req @role tmod
+    {get_prefix()}rem_req role_id owner
+    {get_prefix()}rr role_id```
 
-# BLACKLISTING
-@help.command(aliases=['wl'])
-async def whitelist(ctx):
-    em = discord.Embed(title="`whitelist` command help", description="Detailed help on the `whitelist` command.")
-    em.add_field(name="Aliases", value="This command has one alias: `wl`", inline=False)
-    em.add_field(name="Usage", value="Whitelist a role or user by id or mention, for a specific application or globally.", inline=False)
-    em.add_field(name="Syntax", value=f"""
-        This command takes two arguments, the first, the user or role mention or id, and the second, which is optional, the name of the application:
-        ```
-{get_prefix()}whitelist @role tmod
-{get_prefix()}whitelist user_id owner
-{get_prefix()}wl user_id```
-        
-        Note: The last one will result in a global whitelist of the user
-        """, inline=False)
-    await ctx.send(embed=em)
+            Note: The third one will result in role_id NO LONGER being a requirement for all applicatoins, i.e. a general req
+            """, inline=False)
+        await ctx.send(embed=em)
 
-# REQUIREMENTS MANAGEMENT
-@help.command(aliases=['ar', 'addreq'])
-async def add_req(ctx):
-    em = discord.Embed(title="`add_req` command help", description="Detailed help on the `add_req` command.")
-    em.add_field(name="Aliases", value="This command has two aliases: `ar` and `addreq`", inline=False)
-    em.add_field(name="Usage", value="Add a role requirement to an application or globally.", inline=False)
-    em.add_field(name="Syntax", value=f"""
-        This command takes two arguments, the first, the role mention or id, and the second, which is optional, the name of the application:
-        ```
-{get_prefix()}add_req @role tmod
-{get_prefix()}add_req role_id owner
-{get_prefix()}ar role_id```
-        
-        Note: The last one will result in role_id being a requirement for all applicatoins, i.e. a general req
-        """, inline=False)
-    await ctx.send(embed=em)
-@help.command(aliases=['rr', 'remreq'])
-async def remove_req(ctx):
-    em = discord.Embed(title="`remove_req` command help", description="Detailed help on the `remove_req` command.")
-    em.add_field(name="Aliases", value="This command has two aliases: `rr` and `remreq`", inline=False)
-    em.add_field(name="Usage", value="Remove a role requirement to an application or globally", inline=False)
-    em.add_field(name="Syntax", value=f"""
-        This command takes two arguments, the first, the role mention or id, and the second, which is optional, the name of the application:
-        ```
-{get_prefix()}rem_req @role tmod
-{get_prefix()}rem_req role_id owner
-{get_prefix()}rr role_id```
+    # OWNERS MANAGEMENT
+    @help.command(aliases=['ao'])
+    async def add_owner(ctx):
+        em = discord.Embed(title="`add_owner` command help", description="Detailed help on the `add_owner` command.")
+        em.add_field(name="Aliases", value="This command has one alias: `ao`", inline=False)
+        em.add_field(name="Usage", value="Makes a user, the owner of the bot. This user will now be able to access ALL THE admin commands.", inline=False)
+        em.add_field(name="Syntax", value=f"""
+            This command takes a single argument, that is, the user mention or id:
+            ```
+    {get_prefix()}add_owner @user
+    {get_prefix()}ao user_id```
 
-        Note: The third one will result in role_id NO LONGER being a requirement for all applicatoins, i.e. a general req
-        """, inline=False)
-    await ctx.send(embed=em)
+            Note: Read the usage of this command again. Also requires bot restart to take effect
+            """, inline=False)
+        await ctx.send(embed=em)
+    @help.command(aliases=['ro'])
+    async def rem_owner(ctx):
+        em = discord.Embed(title="`rem_owner` command help", description="Detailed help on the `rem_owner` command.")
+        em.add_field(name="Aliases", value="This command has one alias: `ro`", inline=False)
+        em.add_field(name="Usage", value="Removes a user from being a bot's owner.", inline=False)
+        em.add_field(name="Syntax", value=f"""
+            This command takes a single argument, that is, the user mention or id:
+            ```
+    {get_prefix()}rem_owner @user
+    {get_prefix()}ro user_id```
 
-# OWNERS MANAGEMENT
-@help.command(aliases=['ao'])
-async def add_owner(ctx):
-    em = discord.Embed(title="`add_owner` command help", description="Detailed help on the `add_owner` command.")
-    em.add_field(name="Aliases", value="This command has one alias: `ao`", inline=False)
-    em.add_field(name="Usage", value="Makes a user, the owner of the bot. This user will now be able to access ALL THE admin commands.", inline=False)
-    em.add_field(name="Syntax", value=f"""
-        This command takes a single argument, that is, the user mention or id:
-        ```
-{get_prefix()}add_owner @user
-{get_prefix()}ao user_id```
+            Note: Read the usage of this command again. Also requires bot restart to take effect.
+            """, inline=False)
+        await ctx.send(embed=em)
 
-        Note: Read the usage of this command again. Also requires bot restart to take effect
-        """, inline=False)
-    await ctx.send(embed=em)
-@help.command(aliases=['ro'])
-async def rem_owner(ctx):
-    em = discord.Embed(title="`rem_owner` command help", description="Detailed help on the `rem_owner` command.")
-    em.add_field(name="Aliases", value="This command has one alias: `ro`", inline=False)
-    em.add_field(name="Usage", value="Removes a user from being a bot's owner.", inline=False)
-    em.add_field(name="Syntax", value=f"""
-        This command takes a single argument, that is, the user mention or id:
-        ```
-{get_prefix()}rem_owner @user
-{get_prefix()}ro user_id```
+    # APPLLICATION COMMANDS
+    @help.command()
+    async def accept(ctx):
+        em = discord.Embed(title="`accept` command help", description="Detailed help on the `accept` command.")
+        em.add_field(name="aliases", value="This command has no aliases.", inline=False)
+        em.add_field(name="Usage", value="Accept a user's application.", inline=False)
+        em.add_field(name="Syntax", value=f"""
+            This command takes a three arguments, first, application, then the user (by mention or id) and the third, which is optional, a message:
+            ```
+    1. {get_prefix()}accept tmod @user be active
+    2. {get_prefix()}accept owner user_id```
+            """, inline=False)
+        await ctx.send(embed=em)
+    @help.command(aliases=['deny', 'decline'])
+    async def reject(ctx):
+        em = discord.Embed(title="`reject` command help", description="Detailed help on the `reject` command.")
+        em.add_field(name="aliases", value="This command has two aliases: `deny`, `decline`", inline=False)
+        em.add_field(name="Usage", value="Reject a user's application", inline=False)
+        em.add_field(name="Syntax", value=f"""
+            This command takes a three arguments, first, application, then the user (by mention or id) and the third, which is optional, a message:
+            ```
+    1. {get_prefix()}reject tmod @user be active
+    2. {get_prefix()}deny owner user_id``` 
+            """, inline=False)
+        await ctx.send(embed=em)
+    @help.command()
+    async def consider(ctx):
+        em = discord.Embed(title="`consider` command help", description="Detailed help on the `consider` command.")
+        em.add_field(name="aliases", value="This command has no aliases.", inline=False)
+        em.add_field(name="Usage", value="Consider a user's application", inline=False)
+        em.add_field(name="Syntax", value=f"""
+            This command takes a three arguments, first, application, then the user (by mention or id) and the third, which is optional, a message:
+            ```
+    1. {get_prefix()}consider tmod @user I might accept you if you are active more
+    2. {get_prefix()}consider gaw_man user_id donate more perhaps```
+            """, inline=False)
+        await ctx.send(embed=em)
 
-        Note: Read the usage of this command again. Also requires bot restart to take effect.
-        """, inline=False)
-    await ctx.send(embed=em)
+    # DUMP COMMANDS
+    @help.command(aliases=['dump', 'questions', 'dumpq'])
+    async def dump_questions(ctx):
+        em = discord.Embed(title="`dump_questions` command help", description="Detailed help on the `dump_questions` command.")
+        em.add_field(name="aliases", value="This command has three aliases: `dump`, `questions`, and `dumpq`", inline=False)
+        em.add_field(name="Usage", value="Returns the questions present in a category, if any.", inline=False)
+        em.add_field(name="Syntax", value=f"""
+            This command takes a single argument, that is, the category argument which is optional
+            You must give the exact name of the category:
+            1. {get_prefix()}dump_questions dank
+            2. {get_prefix()}dumpq
 
-# APPLLICATION COMMANDS
-@help.command()
-async def accept(ctx):
-    em = discord.Embed(title="`accept` command help", description="Detailed help on the `accept` command.")
-    em.add_field(name="aliases", value="This command has no aliases.", inline=False)
-    em.add_field(name="Usage", value="Accept a user's application.", inline=False)
-    em.add_field(name="Syntax", value=f"""
-        This command takes a three arguments, first, application, then the user (by mention or id) and the third, which is optional, a message:
-        ```
-1. {get_prefix()}accept tmod @user be active
-2. {get_prefix()}accept owner user_id```
-        """, inline=False)
-    await ctx.send(embed=em)
-@help.command(aliases=['deny', 'decline'])
-async def reject(ctx):
-    em = discord.Embed(title="`reject` command help", description="Detailed help on the `reject` command.")
-    em.add_field(name="aliases", value="This command has two aliases: `deny`, `decline`", inline=False)
-    em.add_field(name="Usage", value="Reject a user's application", inline=False)
-    em.add_field(name="Syntax", value=f"""
-        This command takes a three arguments, first, application, then the user (by mention or id) and the third, which is optional, a message:
-        ```
-1. {get_prefix()}reject tmod @user be active
-2. {get_prefix()}deny owner user_id``` 
-        """, inline=False)
-    await ctx.send(embed=em)
-@help.command()
-async def consider(ctx):
-    em = discord.Embed(title="`consider` command help", description="Detailed help on the `consider` command.")
-    em.add_field(name="aliases", value="This command has no aliases.", inline=False)
-    em.add_field(name="Usage", value="Consider a user's application", inline=False)
-    em.add_field(name="Syntax", value=f"""
-        This command takes a three arguments, first, application, then the user (by mention or id) and the third, which is optional, a message:
-        ```
-1. {get_prefix()}consider tmod @user I might accept you if you are active more
-2. {get_prefix()}consider gaw_man user_id donate more perhaps```
-        """, inline=False)
-    await ctx.send(embed=em)
+            Note: The second one will result in all the questions stored, being sent.
+            """, inline=False)
+        await ctx.send(embed=em)
+    @help.command(aliases=['dumpb', 'blacklists', 'blacklisted'])
+    async def dump_blacklist(ctx):
+        em = discord.Embed(title="`dump_blacklist` command help", description="Detailed help on the `dump_questionsblacklistmand.")
+        em.add_field(name="aliases", value="This command has three aliases: `dumpb`, `blacklisted`, and `blacklists`", inline=False)
+        em.add_field(name="Usage", value="Returns blacklisted users or roles.", inline=False)
+        em.add_field(name="Syntax", value=f"""
+            This command takes a single argument, that is, user or role, which is optional:
+            ```
+    1. {get_prefix()}blacklists usr
+    2. {get_prefix()}dumpb 
 
-# DUMP COMMANDS
-@help.command(aliases=['dump', 'questions', 'dumpq'])
-async def dump_questions(ctx):
-    em = discord.Embed(title="`dump_questions` command help", description="Detailed help on the `dump_questions` command.")
-    em.add_field(name="aliases", value="This command has three aliases: `dump`, `questions`, and `dumpq`", inline=False)
-    em.add_field(name="Usage", value="Returns the questions present in a category, if any.", inline=False)
-    em.add_field(name="Syntax", value=f"""
-        This command takes a single argument, that is, the category argument which is optional
-        You must give the exact name of the category:
-        1. {get_prefix()}dump_questions dank
-        2. {get_prefix()}dumpq
+            Note: The second one will result in all the blacklists stored, being sent.
+            """, inline=False)
+        await ctx.send(embed=em)
+    @help.command(aliases=['dumpr', 'requirements', 'reqs'])
+    async def dump_req(ctx):
+        em = discord.Embed(title="`dump_req` command help", description="Detailed help on the `dump_req` command.")
+        em.add_field(name="aliases", value="This command has three aliases: `dump`, `requirements`, and `dumpr`", inline=False)
+        em.add_field(name="Usage", value="Returns the requirements for a particulat application, if any.", inline=False)
+        em.add_field(name="Syntax", value=f"""
+            This command takes a single argument, that is, the application argument which is optional
+            You must give the exact name of the application:
+            {get_prefix()}dump_questions tmod
+            {get_prefix()}dumpq general
 
-        Note: The second one will result in all the questions stored, being sent.
-        """, inline=False)
-    await ctx.send(embed=em)
-@help.command(aliases=['dumpb', 'blacklists', 'blacklisted'])
-async def dump_blacklist(ctx):
-    em = discord.Embed(title="`dump_blacklist` command help", description="Detailed help on the `dump_questionsblacklistmand.")
-    em.add_field(name="aliases", value="This command has three aliases: `dumpb`, `blacklisted`, and `blacklists`", inline=False)
-    em.add_field(name="Usage", value="Returns blacklisted users or roles.", inline=False)
-    em.add_field(name="Syntax", value=f"""
-        This command takes a single argument, that is, user or role, which is optional:
-        ```
-1. {get_prefix()}blacklists usr
-2. {get_prefix()}dumpb 
+            Note: The second one will result in all the requirements stored, being sent.
+            """, inline=False)
+        await ctx.send(embed=em)
 
-        Note: The second one will result in all the blacklists stored, being sent.
-        """, inline=False)
-    await ctx.send(embed=em)
-@help.command(aliases=['dumpr', 'requirements', 'reqs'])
-async def dump_req(ctx):
-    em = discord.Embed(title="`dump_req` command help", description="Detailed help on the `dump_req` command.")
-    em.add_field(name="aliases", value="This command has three aliases: `dump`, `requirements`, and `dumpr`", inline=False)
-    em.add_field(name="Usage", value="Returns the requirements for a particulat application, if any.", inline=False)
-    em.add_field(name="Syntax", value=f"""
-        This command takes a single argument, that is, the application argument which is optional
-        You must give the exact name of the application:
-        {get_prefix()}dump_questions tmod
-        {get_prefix()}dumpq general
+    @help.command(aliases=['sp', 'prefix'])
+    async def set_prefix(ctx):
+        em = discord.Embed(title="`set_prefix` command help", description="Detailed help on the `set_prefix` command.")
+        em.add_field(name="aliases", value="This command has two aliases: `sp` and `prefix`", inline=False)
+        em.add_field(name="Usage", value="Change the bot's prefix.", inline=False)
+        em.add_field(name="Syntax", value=f"""
+            This command takes a single argument, that is, the new prefix:
+            1. {get_prefix()}set_prefix ?!?
+            2. {get_prefix()}sp !!
 
-        Note: The second one will result in all the requirements stored, being sent.
-        """, inline=False)
-    await ctx.send(embed=em)
+            Note: Ping the bot to know it's current prefix.
+            """, inline=False)
+        await ctx.send(embed=em)
 
-@help.command(aliases=['sp', 'prefix'])
-async def set_prefix(ctx):
-    em = discord.Embed(title="`set_prefix` command help", description="Detailed help on the `set_prefix` command.")
-    em.add_field(name="aliases", value="This command has two aliases: `sp` and `prefix`", inline=False)
-    em.add_field(name="Usage", value="Change the bot's prefix.", inline=False)
-    em.add_field(name="Syntax", value=f"""
-        This command takes a single argument, that is, the new prefix:
-        1. {get_prefix()}set_prefix ?!?
-        2. {get_prefix()}sp !!
+    @help.command()
+    async def toggle(ctx):
+        em = discord.Embed(title="`toggle` command help", description="Detailed help on the `toggle` command.")
+        em.add_field(name="aliases", value="This command has no aliases.", inline=False)
+        em.add_field(name="Usage", value="toggle an application on and off", inline=False)
+        em.add_field(name="Syntax", value=f"""
+            This command takes two arguments, that is, on or off, and the app name:
+            1. {get_prefix()}toggle off tmod
+            2. {get_prefix()}toggle on owner
+            """, inline=False)
+        await ctx.send(embed=em)
 
-        Note: Ping the bot to know it's current prefix.
-        """, inline=False)
-    await ctx.send(embed=em)
+    @help.command(aliases=['wh', 'hier'])
+    async def write_hier(ctx):
+        em = discord.Embed(title="`write_hier` command help", description="Detailed help on the `write_hier` command.")
+        em.add_field(name="aliases", value="This command has two aliases: `wh` and `hier`.", inline=False)
+        em.add_field(name="Usage", value="Write the application hierarchy.", inline=False)
+        em.add_field(name="Syntax", value=f"""
+            This command takes a single argument, that is the rest of the entire message, in triple backticks, the new hierarchy:
+            {get_prefix()}wh
+    ```
+    general:
+        bot_mod:
+        tmod:
+    finishing:
+    ```
+            Note: This will result in first, the general questions being asked, then either bot_mod or tmod category questions, and lastly, the finishing category questions.
+            The user will get a choice as to answer questions for bot_mod or tmod.
+            """, inline=False)
+        await ctx.send(embed=em)
 
-@help.command()
-async def toggle(ctx):
-    em = discord.Embed(title="`toggle` command help", description="Detailed help on the `toggle` command.")
-    em.add_field(name="aliases", value="This command has no aliases.", inline=False)
-    em.add_field(name="Usage", value="toggle an application on and off", inline=False)
-    em.add_field(name="Syntax", value=f"""
-        This command takes two arguments, that is, on or off, and the app name:
-        1. {get_prefix()}toggle off tmod
-        2. {get_prefix()}toggle on owner
-        """, inline=False)
-    await ctx.send(embed=em)
-
-@help.command(aliases=['wh', 'hier'])
-async def write_hier(ctx):
-    em = discord.Embed(title="`write_hier` command help", description="Detailed help on the `write_hier` command.")
-    em.add_field(name="aliases", value="This command has two aliases: `wh` and `hier`.", inline=False)
-    em.add_field(name="Usage", value="Write the application hierarchy.", inline=False)
-    em.add_field(name="Syntax", value=f"""
-        This command takes a single argument, that is the rest of the entire message, in triple backticks, the new hierarchy:
-        {get_prefix()}wh
-```
-general:
-    bot_mod:
-    tmod:
-finishing:
-```
-        Note: This will result in first, the general questions being asked, then either bot_mod or tmod category questions, and lastly, the finishing category questions.
-        The user will get a choice as to answer questions for bot_mod or tmod.
-        """, inline=False)
-    await ctx.send(embed=em)
-
-@help.command(aliases=['re', 'raise'])
-async def raise_er(ctx):
-    em = discord.Embed(title="`raise_er` command help", description="Detailed help on the `raise_er` command.")
-    em.add_field(name="aliases", value="This command has two aliases: `re` and `raise`.", inline=False)
-    em.add_field(name="Usage", value="raise an error", inline=False)
-    em.add_field(name="Syntax", value=f"""
-        This command a single optional argument:
-        1. {get_prefix()}raise It did not reply to me mf
-        2. {get_prefix()}re
-        """, inline=False)
-    await ctx.send(embed=em)
-
+    @help.command(aliases=['re', 'raise'])
+    async def raise_er(ctx):
+        em = discord.Embed(title="`raise_er` command help", description="Detailed help on the `raise_er` command.")
+        em.add_field(name="aliases", value="This command has two aliases: `re` and `raise`.", inline=False)
+        em.add_field(name="Usage", value="raise an error", inline=False)
+        em.add_field(name="Syntax", value=f"""
+            This command a single optional argument:
+            1. {get_prefix()}raise It did not reply to me mf
+            2. {get_prefix()}re
+            """, inline=False)
+        await ctx.send(embed=em)
+help_cmd()
 
 ##########################################################################
 ################### some tiny dependant functions ########################
@@ -450,14 +440,15 @@ def get_guild():
     with open(r"config\guild.txt") as file:
         return int(file.read())
 
-def write_last_channel(id):
+async def write_last_channel(id):
     with open(r"config\lastch.txt", "w") as file:
-        file.write(id)
+        file.write(str(id))
 
 async def return_name_of_user(id):
     usr = await getusr(id)
     if usr != False:
         return usr.name
+
 async def return_name_of_role(id):
     id = int(id)
     guild = bot.get_guild(get_guild())
@@ -888,9 +879,6 @@ async def set_log_channel(ctx, channel):
     if channel == get_log_channel():
         await ctx.send("That is already configured as the log channel.")
         return
-    if channel == "":
-        await ctx.send("huh?")
-        return
     try:
         sa = await bot.fetch_channel(int(channel))
         if isinstance(sa, discord.TextChannel):
@@ -899,11 +887,11 @@ async def set_log_channel(ctx, channel):
                     await sa.send(embed=em)
                     try:
                         write_log_channel(str(channel))
-                        await ctx.send(f"I configured <#{channel}> to log everything other than applications!")
+                        await ctx.send("I configured <#{channel}> to log everything other than applications!")
                         asyncio.create_task(log(f"set {channel} as log channel", ctx))
                     except Exception as e:
                         await ctx.send(e)
-                        
+
                 except Exception as e:
                     await ctx.send(e)
                     await ctx.send("I can't send messages and/or embeds in the specified channel, Please Ensure I am allowed to post embeds and messages in that channel/")
@@ -922,12 +910,8 @@ async def set_log_channel(ctx, channel):
 async def set_app_channel(ctx, chid):
     channel = get_id_from_mention(chid)
     if channel == get_applog():
-        await ctx.send("That is already configured as the application log channel.")
+        await ctx.send("That is already configured as the applog channel.")
         return
-    if channel == "":
-        await ctx.send("huh?")
-        return
-
     try:
         sa = await bot.fetch_channel(int(channel))
         if isinstance(sa, discord.TextChannel):
@@ -936,11 +920,11 @@ async def set_app_channel(ctx, chid):
                     await sa.send(embed=em)
                     try:
                         write_applog(str(channel))
-                        await ctx.send(f"I configured <#{channel}> to log applications!")
+                        await ctx.send("I configured <#{channel}> to log applications!")
                         asyncio.create_task(log(f"set {channel} as log applications", ctx))
                     except Exception as e:
                         await ctx.send(e)
-                        
+
                 except Exception as e:
                     await ctx.send(e)
                     await ctx.send("I can't send messages and/or embeds in the specified channel, Please Ensure I am allowed to post embeds and messages in that channel/")
@@ -1161,7 +1145,7 @@ async def add_owner(ctx, id):
 
 @bot.command(name="rem_owner", aliases=['ro'])
 @commands.is_owner()
-async def add_owner(ctx, id):
+async def rem_owner(ctx, id):
     id = get_id_from_mention(id)
     if id == 736147895039819797:
         await ctx.send("Nou.")
@@ -1277,7 +1261,7 @@ async def dump_questions(ctx, cat=None):
     if cat != None:
         try:
             with open(fr"questions\{cat}.txt") as file:
-                temp = file.read().replace("\\n", "{new_line}")
+                temp = file.read().replace("\\n", " {new_line} ")
                 if temp == "":
                     temp = "No questions, empty category"
                 await ctx.send(f"""
@@ -1663,6 +1647,7 @@ def restart_bot():
 async def restart(ctx):
     await ctx.send("Restarting the bot...")
     write_version()
+    await asyncio.create_task(write_last_channel(ctx.channel.id))
     await asyncio.create_task(log(f"Restart", ctx))
     restart_bot()
 
@@ -1671,7 +1656,7 @@ async def restart(ctx):
 async def shutdown(ctx):
     await ctx.send("shutting down...")
     write_version()
-    write_last_channel(ctx.channel.id)
+    await asyncio.create_task(write_last_channel(ctx.channel.id))
     await asyncio.create_task(log(f"Shut down", ctx))
     await bot.close()
 
@@ -1687,4 +1672,3 @@ async def setguild(ctx, id):
     await ctx.send("done")
 
 bot.run(token)
-# # 
