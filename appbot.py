@@ -2,9 +2,8 @@ import asyncio, discord, os, sys
 from discord.errors import Forbidden, HTTPException, NotFound
 from discord.ext import commands
 from collections import Counter
+from typing import Union
 
-from discord.gateway import DiscordClientWebSocketResponse
-# from discord.utils import get
 em = discord.Embed(title="Test Embed", description="Just ensuring i can send messages and embeds here")
 
 token = sys.argv[1]
@@ -28,6 +27,8 @@ def get_id_from_mention(mention):
         return int(''.join(x for x in mention if x.isdigit()))
     except:
         pass
+
+
 def get_last_channel():
     with open(r"config\lastch.txt") as file:
         return get_id_from_mention(file.read()) 
@@ -36,8 +37,12 @@ bot = commands.Bot(command_prefix=get_prefix(), owner_ids=get_owners())
 bot.remove_command('help')
 bot.case_insensitive = True
 
+blue=0x1F51FF
+red=0xFF2400
+green=0x00FF7F
 
-def get_log_channel():
+
+def get_reg_log_channel():
     with open(r"config\logch.txt") as file:
         x = int(file.read())
     return x
@@ -50,19 +55,22 @@ def get_log_channel():
 
 
 
-async def log(content, ctx=None):
+async def log(content, ctx=None, colour=None):
+
+    if colour is None:
+        colour = 0x02dcff
     if ctx is not None:
-        dsc_content = discord.Embed(title=content, description=f"{ctx.author.id} | {ctx.author.name}")
+        dsc_content = discord.Embed(title=content, description=f"{ctx.author.id} | {ctx.author.name}", colour=colour)
         content = f"{ctx.author.id} | {ctx.author.name} | {content}"
     else:
         content = f"{content}\n"
-        dsc_content = discord.Embed(title=content, description=f"None")
+        dsc_content = discord.Embed(title=content, description=f"None", colour=colour)
 
 
     try:
-        with open(r"config\log.txt", "a") as file:
+        with open(r"config\reg_log.txt", "a") as file:
             file.write(content)
-        x = get_log_channel()
+        x = get_reg_log_channel()
         ch = bot.get_channel(x)
         if ch != None:
             await ch.send(embed=dsc_content)
@@ -432,43 +440,8 @@ def help_cmd():
 help_cmd()
 
 ##########################################################################
-################### some tiny dependant functions ########################
-#################### for good and happy working ##########################
+############################## get functions #############################
 ##########################################################################
-
-def get_guild():
-    with open(r"config\guild.txt") as file:
-        return int(file.read())
-
-async def write_last_channel(id):
-    with open(r"config\lastch.txt", "w") as file:
-        file.write(str(id))
-
-async def return_name_of_user(id):
-    usr = await getusr(id)
-    if usr != False:
-        return usr.name
-
-async def return_name_of_role(id):
-    id = int(id)
-    guild = bot.get_guild(get_guild())
-    role = guild.get_role(id)
-    return role.name
-
-
-def add_question_func(cat, ques):
-    if os.path.exists(fr'questions\{cat}.txt'):
-        pass
-    else:
-        open(fr"questions\{cat}.txt", "w")
-        pass
-
-    try:
-        with open(fr"questions\{cat}.txt", "a") as file:
-            file.write(ques)
-            return True
-    except Exception as e:
-        return False
 
 async def getusr(id):
     usr = bot.get_user(id)
@@ -482,15 +455,26 @@ async def getusr(id):
             return False
     return usr
 
-def remove_question(cat, ques):
-    try:
-        with open(fr"questions\{cat}.txt") as file:
-            file_source = file.read()
-        with open(fr"questions\{cat}.txt", "w") as file:
-            file.write(file_source.replace(f"{ques}", ""))
-        return True
-    except:
-        return False
+
+def getguild():
+    with open(r"config\guild.txt") as file:
+        return int(file.read())
+
+async def getrl(id):
+    id = int(id)
+    guild = bot.get_guild(getguild())
+    role = guild.get_role(id)
+    return role
+
+async def write_last_channel(id):
+    with open(r"config\lastch.txt", "w") as file:
+        file.write(str(id))
+
+##########################################################################
+################### some tiny dependant functions ########################
+#################### for good and happy working ##########################
+##########################################################################
+
 
 async def dumpbls(li, role_or_user):
     if role_or_user == "Role":
@@ -503,151 +487,28 @@ async def dumpbls(li, role_or_user):
     stl = []
     for i in li:
         try:
-            rlname = await return_name_of_role(get_id_from_mention((i.split('_')[-1])))
+            rlname = await getrl(get_id_from_mention((i.split('_')[-1])))
         except:
-            rlname = await return_name_of_user(get_id_from_mention((i.split('_')[-1])))
+            rlname = await getusr(get_id_from_mention((i.split('_')[-1])))
         if "gbl" not in i:
-            stl.append(f"{x} {rlname} cannot apply for application: {i.split('_')[0]}")
+            stl.append(f"{x} {rlname.name} cannot apply for application: {i.split('_')[0]}")
         else:
-            stl.append(f"{x} {rlname} cannot apply to any application")
+            stl.append(f"{x} {rlname.name} cannot apply to any application")
 
     tosend = '\n'.join([str(elem) for elem in stl])
 
     return tosend
 
-def write_log_channel(chid):
-    with open(r"config/logch.txt", "w") as f:
-        f.write(chid)
 
-def write_applog(chid):
-    with open(r"config/applog.txt", "w") as f:
-        f.write(chid)
-
-def write_whitelist_user(usrid, app=None):
-    usrid = get_id_from_mention(usrid)
-    if app is not None:
-        with open(r"bl\usr_blacklists.txt") as file:
-            if f"{app}_{usrid}\n" not in file.readlines():
-                return False
-            else:
-                pass
-        with open(r"bl\usr_blacklists.txt") as file:
-            file_source = file.read()
-        with open(r"bl\usr_blacklists.txt", "w+") as f:
-            f.write(file_source.replace(f"{app}_{usrid}\n", ""))
-            return True
-    else:
-        with open(r"bl\usr_blacklists.txt") as file:
-            if f"gbl_{usrid}\n" not in file.readlines():
-                return False
-            else:
-                pass
-        with open(r"bl\usr_blacklists.txt") as file:
-            file_source = file.read()
-        with open(r"bl\usr_blacklists.txt", "w+") as f:
-            f.write(file_source.replace(f"gbl_{usrid}\n", ""))
-            return True
-
-def write_whitelist_role(rlid, app=None):
-    rlid = get_id_from_mention(rlid)
-    if app is not None:
-        with open(r"bl\rl_blacklists.txt") as file:
-            if f"{app}_{rlid}" not in file.read():
-                return False
-            else:
-                pass
-        with open(r"bl\rl_blacklists.txt") as file:
-            file_source = file.read()
-
-        with open(r"bl\rl_blacklists.txt", "w+") as f:
-            f.write(file_source.replace(f"{app}_{rlid}\n", ""))
-            return True
-    else:
-        with open(r"bl\rl_blacklists.txt") as file:
-            if f"gbl_{rlid}" not in file.read():
-                return False
-            else:
-                pass
-        with open(r"bl\rl_blacklists.txt") as file:
-            file_source = file.read()
-
-        with open(r"bl\rl_blacklists.txt", "w+") as f:
-            f.write(file_source.replace(f"gbl_{rlid}\n", ""))
-            return True
-
-def write_blacklist_user(usrid, app=None):
-    usrid = get_id_from_mention(usrid)
-    if app is not None:
-        with open(r"bl\usr_blacklists.txt") as file:
-            if f"{app}_{usrid}\n" in file.readlines():
-                return False
-            else:
-                pass
-        with open(r"bl\usr_blacklists.txt", "a") as f:
-            f.write(f"{app}_{usrid}\n")
-            return True
-    else:
-        with open(r"bl\usr_blacklists.txt") as file:
-            if f"gbl_{usrid}\n" in file.readlines():
-                return False
-            else:
-                pass
-        with open(r"bl\usr_blacklists.txt", "a") as f:
-            f.write(f"gbl_{usrid}\n")
-            return True
-
-def write_blacklist_role(rlid, app=None):
-    rlid = get_id_from_mention(rlid)
-    if app is not None:
-        with open(r"bl\rl_blacklists.txt") as file:
-            if f"{app}_{rlid}\n" in file.readlines():
-                return False
-            else:
-                pass
-        with open(r"bl\rl_blacklists.txt", "a") as f:
-            f.write(f"{app}_{rlid}\n")
-            return True
-    else:
-        with open(r"bl\rl_blacklists.txt") as file:
-            if f"gbl_{rlid}\n" in file.readlines():
-                return False
-            else:
-                pass
-
-        with open(r"bl\rl_blacklists.txt", "a") as f:
-            f.write(f"gbl_{rlid}\n")
-            return True
-
-def get_ques_addq(cat):
-    if os.path.exists(fr'questions\{cat}.txt'):
-        pass
-    else:
+def get_questions_from_cat(cat):
+    if not os.path.exists(fr'questions\{cat}.txt'):
         open(fr"questions\{cat}.txt", "w")
-        pass
     with open(fr"questions\{cat}.txt") as file:
         return file.readlines()
 
-def get_applog():
-    with open(r"config\applog.txt") as file:
+def get_app_log_channel():
+    with open(r"config\app_log.txt") as file:
         return int(file.read())
-
-
-# def get_app_role(app):
-#     with open(r"config\app_role.txt") as file:
-#         if app not in file.read():
-#             return
-#         else:
-#             for a in file.readlines():
-#                 if app in a:
-#                     return (a.split("_"))[-1]
-
-# async def acc_app(ctx, app, usrid):
-#     try:
-#         usr = await bot.get_user(usrid)
-#         rl = get(ctx.guild.roles, id=(int(get_app_role(app))))
-#         await usr.add_roles(rl)
-#     except:
-#         pass
 
 def write_answer(usr, app, ques, ans):
     with open(fr"answers\{usr}_{app}.txt", "a") as file:
@@ -874,413 +735,341 @@ async def all_checks(ctx, app):
 
 @bot.command(name="set_log_channel", aliases = ["slc", "setlog"])
 @commands.is_owner()
-async def set_log_channel(ctx, channel):
-    channel = get_id_from_mention(channel)
-    if channel == get_log_channel():
-        await ctx.send("That is already configured as the log channel.")
+async def set_log_channel(ctx, channel: Union[discord.TextChannel]):
+    if channel.id == get_reg_log_channel():
+        await ctx.send("That is already configured as the regular log channel.")
         return
+
     try:
-        sa = await bot.fetch_channel(int(channel))
-        if isinstance(sa, discord.TextChannel):
-            if len(str(channel)) == 18:
-                try:
-                    await sa.send(embed=em)
-                    try:
-                        write_log_channel(str(channel))
-                        await ctx.send("I configured <#{channel}> to log everything other than applications!")
-                        asyncio.create_task(log(f"set {channel} as log channel", ctx))
-                    except Exception as e:
-                        await ctx.send(e)
-
-                except Exception as e:
-                    await ctx.send(e)
-                    await ctx.send("I can't send messages and/or embeds in the specified channel, Please Ensure I am allowed to post embeds and messages in that channel/")
-            else:
-                await ctx.send(f"Channel argument has been improperly passed.")
-        else:
-            await ctx.reply("Not a valid text channel...")
-
-    except Exception as e:
-        await ctx.reply(e)
+        newch = bot.get_channel(channel.id)
+        await newch.send(embed=em)
+    except:
+        await ctx.send(embed=discord.Embed(title="Error!", description="I can't send messages and/or embeds in the specified channel, check permissions, and ping the bot in that channel once.", colour=red))
         return
 
+    with open(r"config/logch.txt", "w") as f:
+        f.write(str(channel.id))
+    await ctx.send(embed=discord.Embed(title="Task completed successfully!", description=f"Set <#{channel.id}> as regular log channel.", colour=green))
+    asyncio.create_task(log(f"Set <#{channel.id}> as regular log channel.", ctx, green))
 
 @bot.command(name="set_app_channel", aliases=["sac", "setapp"])
 @commands.is_owner()
-async def set_app_channel(ctx, chid):
-    channel = get_id_from_mention(chid)
-    if channel == get_applog():
-        await ctx.send("That is already configured as the applog channel.")
+async def set_app_channel(ctx, channel: Union[discord.TextChannel]):
+
+    if channel.id == get_app_log_channel():
+        await ctx.send("That is already configured as the app log channel.")
         return
+
     try:
-        sa = await bot.fetch_channel(int(channel))
-        if isinstance(sa, discord.TextChannel):
-            if len(str(channel)) == 18:
-                try:
-                    await sa.send(embed=em)
-                    try:
-                        write_applog(str(channel))
-                        await ctx.send("I configured <#{channel}> to log applications!")
-                        asyncio.create_task(log(f"set {channel} as log applications", ctx))
-                    except Exception as e:
-                        await ctx.send(e)
-
-                except Exception as e:
-                    await ctx.send(e)
-                    await ctx.send("I can't send messages and/or embeds in the specified channel, Please Ensure I am allowed to post embeds and messages in that channel/")
-            else:
-                await ctx.send(f"Channel argument has been improperly passed.")
-        else:
-            await ctx.reply("Not a valid text channel...")
-
-    except Exception as e:
-        await ctx.reply(e)
+        newch = bot.get_channel(channel.id)
+        await newch.send(embed=em)
+    except:
+        await ctx.send(embed=discord.Embed(title="Error!", description="I can't send messages and/or embeds in the specified channel, check permissions, and ping the bot in that channel once.", colour=red))
         return
 
-@bot.command(name="add_question", aliases = ["aq", "add", "addq"])
+    with open(r"config/app_log.txt", "w") as f:
+        f.write(str(channel.id))
+    await ctx.send(embed=discord.Embed(title="Task completed successfully!", description=f"Set <#{channel.id}> as application log channel.", colour=green))
+    asyncio.create_task(log(f"Set <#{channel.id}> as application log channel.", ctx, green))
+
+@bot.command(name="add_question", aliases = ["aq", "add", "addq", "addques"])
 @commands.is_owner()
 async def add_question(ctx, cat, *, ques):
-    x = ques.replace('\n','\\n')
-    dsp = x.replace("\\n", "{new_line}")
+    x = ques.replace('\n','\\n').replace("\"", "'")
+    dsp = x.replace("\\n", " {new_line} ")
     ques = f"{x}\n"
-    if ques in get_ques_addq(cat):
-        await ctx.send("Already a question")
+    filename = (fr"questions\{cat}.txt") 
+
+    if ques in get_questions_from_cat(cat):
+        await ctx.send(embed=discord.Embed(title="Error!", description=f"`{dsp}`\n is already a question in category `{cat}`", colour=red))
         return
-    else:
-        try:
-            if add_question_func(cat, ques):
-                await ctx.send(f"Added question `{dsp}` in category `{cat}`")
-                asyncio.create_task(log(f"Added question \"{dsp}\" in category \"{cat}\"", ctx))
-            else:
-                await ctx.send("Idk some error occured")
-        except Exception as e:
-            await ctx.send(e)
 
+    with open(filename, "a") as file:
+        file.write(ques)
+    await ctx.send(embed=discord.Embed(title="Task completed successfully!", description=f"Added question `{dsp}` in category `{cat}`", colour=green))
+    asyncio.create_task(log(f"Added question \"{dsp}\" in category `{cat}`", ctx, green))
 
-@bot.command(name="rem_question", aliases = ["rem", "remove", 'rq', "remq"])
+@bot.command(name="rem_question", aliases = ["removeques", "remove", 'rq', "remq"])
 @commands.is_owner()
 async def rem_question(ctx, cat, *, ques):
     x = ques.replace('\n','\\n')
     dsp = x.replace("\\n", "{new_line}")
     ques = f"{x}\n"
-    if ques not in get_ques_addq(cat):
-        await ctx.send("Already not a question")
-        return
-    try:
-        if remove_question(cat, ques):
-            await ctx.send(f"Removed question `{dsp}` in category `{cat}`")
-            asyncio.create_task(log(f"Removed question \"{dsp}\" from category \"{cat}\"", ctx))
-        else:
-            await ctx.send("idk some error came oof.")
-    except Exception as e:
-        await ctx.send(e)
+    filename = (fr"questions\{cat}.txt")
 
-@bot.command(name="whitelist", aliases=['wl'])
-@commands.is_owner()
-async def whitelist(ctx, id, app=None):
-    id = get_id_from_mention(id)
-    if id == 736147895039819797:
-        await ctx.send("Nou.")
-        return
-    else:
-        pass
-    try:
-        await bot.fetch_user(id)
-        pass    
-    except NotFound:
-        try:
-            if write_whitelist_role(id, app):
-                if app is not None:
-                    await ctx.send(f"Whitelist role {id} : {await return_name_of_role(id)} for app {app}")
-                    asyncio.create_task(log(f"Whitelisted role {id} : {await return_name_of_role(id)} for app {app}", ctx))
-                else:
-                    await ctx.send(f"Whitelist role {id} : {await return_name_of_role(id)} globally")
-                    asyncio.create_task(log(f"Whitelisted role {id} : {await return_name_of_role(id)} globally", ctx))
-
-            else:
-                await ctx.send("Already Whitelisted")
-        except HTTPException:
-            await ctx.send("Error, could you please re-run the command")
-        return
-    if write_whitelist_user(id, app):
-        if app is not None:
-            await ctx.send(f"Whitelisted user {id} : {await return_name_of_user(id)} for app {app}")
-            asyncio.create_task(log(f"Whitelisted user {id} : {await return_name_of_user(id)} for app {app}", ctx))
-        else:
-            await ctx.send(f"Whitelisted user {id} : {await return_name_of_user(id)} globally")
-            asyncio.create_task(log(f"Whitelisted user {id} : {await return_name_of_user(id)} globally", ctx))
-    else:
-        await ctx.send("Already whitelisted?")
-
-@bot.command(name="blacklist", aliases=['bl'])
-@commands.is_owner()
-async def blacklist(ctx, id, app=None):
-    id = get_id_from_mention(id)
-    if id == 736147895039819797:
-        await ctx.send("Nou.")
-        return
-    else:
-        pass
-    try:
-        await bot.fetch_user(id)
-        pass
-    except NotFound:
-        try:
-            if write_blacklist_role(id, app):
-                if app is not None:
-                    await ctx.send(f"Blacklisted role `{id} : {await return_name_of_role(id)}` for app `{app}`")
-                    asyncio.create_task(log(f"Blacklisted role `{id} : {await return_name_of_role(id)}` for app `{app}`", ctx))
-                else:
-                    await ctx.send(f"Blacklisted role `{id} : {await return_name_of_role(id)}` globally.")
-                    asyncio.create_task(log(f"Blacklisted role `{id} : {await return_name_of_role(id)}` globally", ctx))
-
-            else:
-
-                await ctx.send("Already Blacklisted")
-            return
-        except HTTPException:
-            await ctx.send("Error, could you please re-run the command")
-            return
-    if write_blacklist_user(id, app):
-        if app is not None:
-            await ctx.send(f"Blacklisted user `{id} : {await return_name_of_user(id)}` for app `{app}`")
-            asyncio.create_task(log(f"Blacklisted user `{id} : {await return_name_of_user(id)}` for app `{app}`", ctx))
-        else:
-            await ctx.send(f"Blacklisted user `{id} : {await return_name_of_user(id)}` globally")
-            asyncio.create_task(log(f"Blacklisted user `{id} : {await return_name_of_user(id)}` globally", ctx))
-    else:
-        await ctx.send("Already Blacklisted")
-
-@bot.command(name="add_req", aliases=['ar', 'addreq'])
-@commands.is_owner()
-async def add_req(ctx, req, app=None):
-    req = get_id_from_mention(req)
-    try:
-        guild = bot.get_guild(get_guild())
-        guild.get_role(req)
-        pass
-    except HTTPException:
-        await ctx.send("Error, could you please re-run the command")
-        return
-    except NotFound:
-        await ctx.send("I am taking only roles as requirements as of now.")
+    if not os.path.exists(filename):
+        await ctx.send(embed=discord.Embed(title="Error!", description=f"`Category: `{cat}` is not present.", colour=red))
         return
 
-    if app != None:
-        det = f"{app}_{req}\n"
-        ad = f"to apply for {app}"
-    else:
-        det = f"general_{req}\n"
-        ad = "to apply to any application."
-
-    with open(r"config\req.txt") as file:
-        if det in (file.readlines()):
-            await ctx.send("This is already a requirement.")
-            return
-        else:
-            with open(r"config\req.txt", "a") as file:
-                file.write(det)
-            await ctx.send(f"Users will now require {await return_name_of_role(req)} {ad}.")
-            asyncio.create_task(log(f"Added role requirement of {await return_name_of_role(req)} {ad}", ctx))
-
-
-@bot.command(name="remove_req", aliases=['rr', 'remreq']) 
-@commands.is_owner()
-async def remove_req(ctx, req, app=None):
-    req = get_id_from_mention(req)
-    try:
-        guild = bot.get_guild(get_guild())
-        guild.get_role(req)
-        pass
-    except HTTPException:
-        await ctx.send("Error, could you please re-run the command")
-        return
-    except NotFound:
-        await ctx.send("I am taking only roles as requirements as of now.")
+    if ques not in get_questions_from_cat(cat):
+        await ctx.send(embed=discord.Embed(title="Error!", description=f"`{dsp}`\n is already not a question in category `{cat}`", colour=red))
         return
 
-    if app != None:
-        det = f"{app}_{req}\n"
-        ad = f"to apply for {app}"
-    else:
-        det = f"general_{req}\n"
-        ad = "to apply to any application."
+    with open(filename, "r+") as file:
+        file_source = file.read()
+        file.seek(0)
+        file.truncate()
+        file.write(file_source.replace(f"{ques}", ""))
 
-    with open(r"config\req.txt") as file:
-        if det not in (file.readlines()):
-            await ctx.send("This was never a requirement.")
-            return
-        else:
-            with open(r"config\req.txt") as f:
-                file_source = f.read()
-            with open(r"config\req.txt", "w") as f:
-                f.write(file_source.replace(f"{det}", ""))
-            await ctx.send(f"Users will no longer require {await return_name_of_role(req)} {ad}.")
-            asyncio.create_task(log(f"Removed role requirement of {await return_name_of_role(req)} {ad}", ctx))
+    await ctx.send(embed=discord.Embed(title="Task completed successfully!", description=f"Removed question `{dsp}` from category `{cat}`", colour=green))
+    asyncio.create_task(log(f"Removed question \"{dsp}\" from category \"{cat}\"", ctx, red))
 
-@bot.command(name="add_owner", aliases=['ao'])
-@commands.is_owner()
-async def add_owner(ctx, id):
-    id = get_id_from_mention(id)
-    if id == 736147895039819797:
-        await ctx.send("Nou.")
-        return
-    try:
-        await bot.fetch_user(id)
-        pass
-    except NotFound:
-        await ctx.send("Not a user")
-        return
-    
-    with open(r"config\owners.txt") as file:
-        if str(id) in file.read():
-            await ctx.send("Already an owner")
-            return
-        else:
-            pass
-    with open(r"config\owners.txt", "a") as file:
-            file.write(f"{str(id)}\n")
-            await ctx.send(f"Added user {id} : {await return_name_of_user(id)} as owner. Restart required.")
-            asyncio.create_task(log(f"Added user {id} : {await return_name_of_user(id)} as owner.", ctx))
-
-@bot.command(name="rem_owner", aliases=['ro'])
-@commands.is_owner()
-async def rem_owner(ctx, id):
-    id = get_id_from_mention(id)
-    if id == 736147895039819797:
-        await ctx.send("Nou.")
-        return
-
-    try:
-        await bot.fetch_user(id)
-        pass
-    except NotFound:
-        await ctx.send("Not a user")
-        return
-
-    try:
-        with open(r"config\owners.txt") as file:
-            file_source = file.read()
-            if f"{id}\n" in file_source:
-                pass
-            else:
-                await ctx.send("Already not an owner")
-                return
-        with open(r"config\owners.txt", "w") as file:
-            file.write(file_source.replace(f"{id}\n", ""))
-        await ctx.send(f"Removed user {id} : {await return_name_of_user(id)} from owner. Restart required.")
-        asyncio.create_task(log(f"Removed user {id} : {await return_name_of_user(id)} from owner.", ctx))
-
-    except Exception as e:
-        await ctx.send(e)
 
 @bot.command(name="clear_category", aliases=['cc', 'rc', 'clearcat'])
+@commands.is_owner()
 async def clear_category(ctx, cat):
-    if os.path.exists(fr'questions\{cat}.txt'):
-        await ctx.send(f"Are you sure you want to delete category `{cat}` and all it's questions?\nYes or no mate")
-        def check(m):
-            return m.author.id == ctx.author.id and m.channel.id == ctx.channel.id
-        msg = await bot.wait_for("message", check=check)
-        if msg.content == "yes" or msg.content == "y":
-            pass
-        else:
-            await ctx.send("Fine then, I won't.")
-            return
-    else:
-        await ctx.send("No such category.")
+    if not os.path.exists(fr'questions\{cat}.txt'):
+        await ctx.send(embed=discord.Embed(title="Error!", description=f"Category: `{cat}` does not exist.", colour=red))
+        return
+
+    await ctx.send(embed=discord.Embed(title="Confirm Task", description=f"Are you sure you want to delete category `{cat}` and all it's questions?\nReply with `yes` or `no` mate", colour=blue))
+    def check(m):
+        return m.author.id == ctx.author.id and m.channel.id == ctx.channel.id
+    msg = await bot.wait_for("message", check=check)
+
+    if msg.content != "yes" or msg.content != "y":
+        await ctx.send(embed=discord.Embed(title="Task Aborted", description="Aborted removal of category `{cat}`", colour=red))
         return
 
     os.remove(fr"questions\{cat}.txt")
-    asyncio.create_task(log(f"Removed category {cat}", ctx))
-    await ctx.send(f"Removed category `{cat}`")
+    await ctx.send(embed=discord.Embed(title="Task completed successfully!", description=f"Removed category `{cat}`", colour=green))
+    asyncio.create_task(log(f"Removed category `{cat}`", ctx, red))
 
+@bot.command(name="blacklist", aliases=['bl'])
+@commands.is_owner()
+async def blacklist(ctx, arg: Union[discord.Member, discord.Role], app=None):
+    if arg.id in get_owners():
+        await ctx.send("Stop drinking.")
+        return
+
+    if isinstance(arg, discord.Member):
+        todo = "usr"
+    elif isinstance(arg, discord.Role):
+        todo = "rl"
+    else:
+        print("You should not have reached here.")
+        return
+
+    if app is not None:
+        dets = f"{app}_{arg.id}\n"
+        if todo == "usr":
+            tosend = f"Blacklisted user `{arg.id} : {arg.name}` for app: `{app}`"
+        elif todo == "rl":
+            tosend = f"Blacklisted role `{arg.id} : {arg.name}` for app: `{app}`"
+    else:
+        dets = f"gbl_{arg.id}\n"
+        if todo == "usr":
+            tosend = f"Blacklisted user `{arg.id} : {arg.name}` globally"
+        elif todo == "rl":
+            tosend = f"Blacklisted role `{arg.id} : {arg.name}` globally"
+
+    filename = fr"bl\{todo}_blacklists.txt"
+    with open(filename) as file:
+        if dets in file.readlines():
+            await ctx.send(embed=discord.Embed(title="Error!", description="Already Blacklisted.", colour=red))
+            return
+
+    with open(filename, "a") as file:
+        file.write(dets)
+
+    await ctx.send(embed=discord.Embed(title="Task completed successfully", description=tosend, colour=green))
+    asyncio.create_task(tosend, ctx, red)
+
+
+@bot.command(name="whitelist", aliases=['wl'])
+@commands.is_owner()
+async def whitelist(ctx, arg: Union[discord.Member, discord.Role], app=None):
+
+    if arg.id in get_owners():
+        await ctx.send("Nou.")
+        return
+
+    if isinstance(arg, discord.Member):
+        todo = "usr"
+    elif isinstance(arg, discord.Role):
+        todo = "rl"
+    else:
+        print("You should not have reached here.")
+        return
+
+    if app is not None:
+        dets = f"{app}_{arg.id}\n"
+        if todo == "usr":
+            tosend = f"Whitelisted user `{arg.id} : {arg.name}` for app: `{app}`"
+        elif todo == "rl":
+            tosend = f"Whitelisted role `{arg.id} : {arg.name}` for app: `{app}`"
+    else:
+        dets = f"gbl_{arg.id}\n"
+        if todo == "usr":
+            tosend = f"Whitelisted user `{arg.id} : {arg.name}` globally"
+        elif todo == "rl":
+            tosend = f"Whitelisted role `{arg.id} : {arg.name}` globally"
+
+    filename = fr"bl\{todo}_blacklists.txt"
+
+    with open(filename) as file:
+        if dets not in file.readlines():
+            await ctx.send(embed=discord.Embed(title="Error!", description="Already Whitelisted.", colour=red))
+            return
+
+    with open(filename, "r+") as file:
+        file_source = file.read()
+        file.seek(0)
+        file.truncate()
+        file.write(file_source.replace(dets, ""))
+
+    await ctx.send(embed=discord.Embed(title="Task completed successfully", description=tosend, colour=green))
+    asyncio.create_task(tosend, ctx, red)
+
+
+@bot.command(name="add_req", aliases=['ar', 'addreq'])
+@commands.is_owner()
+async def add_req(ctx, req: Union[discord.Role], app=None):
+
+    if req.id not in [i.id for i in await bot.get_guild(id).roles]:
+        await ctx.send("What?")
+        return
+
+    if app is not None:
+        det = f"{app}_{req.id}\n"
+        tosend = f"to apply for {app}"
+    else:
+        det = f"general_{req.id}\n"
+        tosend = f"to apply for any application."
+
+    with open(r"config\req.txt") as file:
+        if det in file.readlines():
+            await ctx.send(embed=discord.Embed(title="Error!", description="Already a requirement.", colour=red))
+            return
+
+    with open(r"config\req.txt", "a") as file:
+        file.write(det)
+
+    await ctx.send(embed=discord.Embed(title="Task completed successfully", description=f"Users will now require {req.name} {tosend}.", colour=green))
+    asyncio.create_task(log(f"Added role requirement of {req.name} {tosend}", ctx, green))
+
+@bot.command(name="remove_req", aliases=['rr', 'remreq']) 
+@commands.is_owner()
+async def remove_req(ctx, req: Union[discord.Role], app=None):
+
+    if app != None:
+        det = f"{app}_{req.id}\n"
+        tosend = f"to apply for {app}"
+    else:
+        det = f"general_{req.id}\n"
+        tosend = "to apply to any application."
+
+    with open(r"config\req.txt") as file:
+        if det not in file.readlines():
+            await ctx.send(embed=discord.Embed(title="Error!", description="This was never a requirement.", colour=red))
+            return
+
+    with open(r"config\req.txt", "r+") as file:
+        file_source = file.read()
+        file.seek(0)
+        file.truncate()
+        file.write(file_source.replace(f"{det}", ""))
+    
+    await ctx.send(embed=discord.Embed(title="Task completed successfully", description=f"Users will no longer require {req.name} {tosend}.", colour=green))
+    asyncio.create_task(log(f"Removed role requirement of {req.name} {tosend}", ctx, green))
+
+@bot.command(name="add_owner", aliases=['ao'])
+@commands.is_owner()
+async def add_owner(ctx, usr: Union[discord.Member]):
+
+    if usr.id == 736147895039819797:
+        await ctx.send("Nou.")
+        return
+
+    with open(r"config\owners.txt") as file:
+        if str(usr.id) in file.read():
+            await ctx.send("Already an owner")
+            return
+
+    bot.owner_ids.append(usr.id)
+    with open(r"config\owners.txt", "a") as file:
+        file.write(f"{usr.id}\n")
+    await ctx.send(embed=discord.Embed(title="Task completed successfully", description=f"Added user {usr.id} : {usr.name} as owner.", colour=green))
+    asyncio.create_task(log(f"Added user `{usr.id} : {usr.name}` as owner.", ctx, green))
+
+@bot.command(name="rem_owner", aliases=['ro'])
+@commands.is_owner()
+async def rem_owner(ctx, usr: Union[discord.Member]):
+
+    if usr.id == 736147895039819797:
+        await ctx.send("Nou.")
+        return
+    with open(r"config\owners.txt") as file:
+        file_source = file.read()
+    
+        if f"{usr.id}\n" not in file_source:
+            await ctx.send("Already not an owner")
+            return
+
+    bot.owner_ids.remove(usr.id)
+    with open(r"config\owners.txt", "w") as file:
+        file.write(file_source.replace(f"{usr.id}\n", ""))
+
+    await ctx.send(embed=discord.Embed(title="Task completed successfully", description=f"Removed user {usr.id} : {usr.name} as owner.", colour=green))
+    asyncio.create_task(log(f"Removed user `{usr.id} : {usr.name}` as owner.", ctx, green))
 
 
 @bot.command(name="consider")
-async def consider(ctx, app, usrid, *, msg=None):
-    usrid = get_id_from_mention(usrid)
-    usr = await getusr(usrid)
-    if usr is not False:
-        pass
-    else:
-        return
+async def consider(ctx, app, usr: Union[discord.Member], *, msg=None):
 
     if msg != None:
-        await usr.send(f"Your application for {app} is being considered. Also, {msg}")
-        asyncio.create_task(log(f"Considered {usrid}'s application for {app}, with message: {msg}", ctx))
-        await ctx.send(f"Considered {usrid}'s application for {app}, with message: {msg}")
+        await usr.send(embed=discord.Embed(title="Application status update", description=f"Your application for {app} is being considered. Also, {msg}, colour=blue"))
+        asyncio.create_task(log(f"Considered {app} application of user `{usr.id} : {usr.name}`, with message: {msg}", ctx, blue))
+        await ctx.send(embed=discord.Embed(title="Application status update", description=f"Considered {app} application of user `{usr.id} : {usr.name}`,with message: {msg}", colour=blue))
     else:
-        await usr.send(f"Your application for {app} is being considered.")
-        asyncio.create_task(log(f"Considered {usrid}'s application for {app}.", ctx))
-        await ctx.send(f"Considered {usrid}'s application for {app}.")
+        await usr.send(embed=discord.Embed(title="Application status update", description=f"Your application for {app} is being considered.", colour=blue))
+        asyncio.create_task(log(f"Considered {app} application of user `{usr.id} : {usr.name}`.", ctx, blue))
+        await ctx.send(embed=discord.Embed(title="Application status update", description=f"Considered {app} application of user `{usr.id} : {usr.name}`.", colour=blue))
 
 @bot.command(name="accept")
-async def accept(ctx, app, usrid, *, msg=None):
-    usrid = get_id_from_mention(usrid)
-    usr = await getusr(usrid)
-    if usr is not False:
-        pass
-    else:
-        return
+async def accept(ctx, app, usr: Union[discord.Member], *, msg=None):
 
     if msg != None:
-        await usr.send(f"Your application for {app} has been accepted. Also, {msg}")
-        asyncio.create_task(log(f"Accepted {usrid}'s application for {app}, with message: {msg}", ctx))
-        await ctx.send(f"Accepted {usrid}'s application for {app}, with message: {msg}")
+        await usr.send(embed=discord.Embed(title="Application status update", description=f"Your application for {app} has been accepted. Also, {msg}, colour=green"))
+        asyncio.create_task(log(f"Accepted {app} application of user `{usr.id} : {usr.name}`, with message: {msg}", ctx, green))
+        await ctx.send(embed=discord.Embed(title="Application status update", description=f"Accepted {app} application of user `{usr.id} : {usr.name}`,with message: {msg}", colour=green))
     else:
-        await usr.send(f"Your application for {app} has been accepted.")
-        asyncio.create_task(log(f"Accepted {usrid}'s application for {app}.", ctx))
-        await ctx.send(f"Accepted {usrid}'s application for {app}.")
-    # try:
-    #     await acc_app(ctx, app, usrid)
-    #     await ctx.send("Added role to user")
-    # except Exception as e:
-    #     await ctx.send(f"error: {e}")
+        await usr.send(embed=discord.Embed(title="Application status update", description=f"Your application for {app} has been accepted.", colour=green))
+        asyncio.create_task(log(f"Accepted {app} application of user `{usr.id} : {usr.name}`.", ctx, green))
+        await ctx.send(embed=discord.Embed(title="Application status update", description=f"Accepted {app} application of user `{usr.id} : {usr.name}`.", colour=green))
 
-@bot.command(name="reject", aliases=["deny", "decline"])
-async def reject(ctx, app, usrid, *, msg=None):
-    usrid = get_id_from_mention(usrid)
-    usr = await getusr(usrid)
-    if usr is not False:
-        pass
-    else:
-        return
+@bot.command(name="accept")
+async def accept(ctx, app, usr: Union[discord.Member], *, msg=None):
 
     if msg != None:
-        await usr.send(f"Your application for {app} has been rejected. Also, {msg}")
-        asyncio.create_task(log(f"Rejected {usrid}'s application for {app}, with message: {msg}", ctx))
-        await ctx.send(f"Rejected {usrid}'s application for {app}, with message: {msg}")
+        await usr.send(embed=discord.Embed(title="Application status update", description=f"Your application for {app} has been rejected. Also, {msg}, colour=red"))
+        asyncio.create_task(log(f"Rejected {app} application of user `{usr.id} : {usr.name}`, with message: {msg}", ctx, red))
+        await ctx.send(embed=discord.Embed(title="Application status update", description=f"Rejected {app} application of user `{usr.id} : {usr.name}`,with message: {msg}", colour=red))
     else:
-        await usr.send(f"Your application for {app} has been rejected.")
-        asyncio.create_task(log(f"Rejected {usrid}'s application for {app}.", ctx))
-        await ctx.send(f"Rejected {usrid}'s application for {app}.")
+        await usr.send(embed=discord.Embed(title="Application status update", description=f"Your application for {app} has been rejected.", colour=red))
+        asyncio.create_task(log(f"Rejected {app} application of user `{usr.id} : {usr.name}`.", ctx, red))
+        await ctx.send(embed=discord.Embed(title="Application status update", description=f"Rejected {app} application of user `{usr.id} : {usr.name}`.", colour=red))
 
 @bot.command(name="dump_questions", aliases=['dump', 'questions', 'dumpq'])
 @commands.is_owner()
 async def dump_questions(ctx, cat=None):
-    if cat != None:
+    if cat is not None:
         try:
             with open(fr"questions\{cat}.txt") as file:
                 temp = file.read().replace("\\n", " {new_line} ")
                 if temp == "":
-                    temp = "No questions, empty category"
-                await ctx.send(f"""
-                ```ini
-[ Questions for "{cat}" category]
-
-{temp}```""")
+                    await ctx.send("Empty category")
+                else:
+                    await ctx.send(embed=discord.Embed(title=f"Questions for category `{cat}`", description=temp))
         except FileExistsError:
             await ctx.send("No such category!")
-        except Exception as e:
-            await ctx.send(e)
+
     else:
         x = next(os.walk("questions"), (None, None, []))[2]
-        xy = str(x).replace(".txt", "")
-        await ctx.send(f"""
-        ```ini
-[ Categories ]
-
-{xy}```""")
+        stl = []
+        for i in x:
+            stl.append(i.replace(".txt", ""))
+        await ctx.send(embed=discord.Embed(title="Categories", description=', '.join([str(elem) for elem in stl])))
         for fl in x:
             with open(fr"questions\{fl}") as file:
                 t = file.read()
@@ -1298,95 +1087,59 @@ async def dump_questions(ctx, cat=None):
 
 @bot.command(name="dump_blacklist", aliases=['dumpb', 'blacklists', 'blacklisted'])
 async def dump_blacklist(ctx, role_or_user=None):
+
     with open(r"bl\rl_blacklists.txt") as file:
-        x = file.readlines()
-        if str(x) != []:
-            pass
-        else:
+        ab = file.readlines()
+        if ab == []:
             return
-        
-        st = []
-        for ah in x:
-            st.append(ah.replace("\\n", " {new_line} "))
+        st = [ah.replace("\\n", " {new_line} ") for ah in ab]
+
     with open(r"bl\usr_blacklists.txt") as file:
         ab = file.readlines()
-        if str(ab) != []:
-            pass
-        else:
+        if ab == []:
             return
-        
-        xy = []
-        for ah in ab:
-            xy.append(ah.replace("\\n", " {new_line} "))
+        xy = [ah.replace("\\n", " {new_line} ") for ah in ab]
 
     role_blacklists = await dumpbls(st, "Role")
     user_blacklists = await dumpbls(xy, "User")
-    # Add support for more blacklists, more mebeds basically
-
+    # Add support for more blacklists, more embeds basically
+    roleemb = discord.Embed(title="Role blacklists", description=role_blacklists, colour=0x02dcff)
+    useremb = discord.Embed(title="User Blacklists", description=user_blacklists, colour=0x02dcff)
     if role_or_user == "role" or role_or_user == "rl":
-        emb = discord.Embed(title="Blacklists", description=" Role Blacklists\n‎")
-        emb.add_field(name="Role Blacklists", value=f"{role_blacklists}\n", inline=False)
-        await ctx.send(embed=emb)
+        await ctx.send(embed=roleemb)
 
     elif role_or_user == "user" or role_or_user == "usr":
-        emb = discord.Embed(title="Blacklists", description="User Blacklists\n‎", colour=0x02dcff)
-        emb.add_field(name="User Blacklists", value=f"{user_blacklists}\n", inline=False)
-        await ctx.send(embed=emb)
+        await ctx.send(embed=useremb)
 
 
     elif role_or_user is None:
-        emb = discord.Embed(title="Blacklists", description="User and Role Blacklists\n‎")
-        emb.add_field(name="User Blacklists", value=f"{user_blacklists}\n‎", inline=False)
-        emb.add_field(name="Role Blacklists", value=role_blacklists, inline=False)
-        await ctx.send(embed=emb)
+        await ctx.send(embed=useremb)
+        await ctx.send(embed=roleemb)
 
     else:
-        await ctx.send("Error")
+        await ctx.send("Only two options you have, `role` or `user`")
 
 @bot.command(name="dump_owners", aliases=['owners', 'do'])
 async def dump_owners(ctx):
-    await ctx.send(get_owners())
-
+    await ctx.send(', '.join([str(elem) for elem in [f"<@{x}>" for x in get_owners()]]))
 
 @bot.command(name="dump_req", aliases=['dumpr', 'requirements', 'reqs'])
 @commands.is_owner()
 async def dump_req(ctx, cat=None):
+
     if cat == "general":
-        await ctx.send(f"""`
-        ``ini
-[ General Requirements ]
+        await ctx.send(discord.Embed(title="General Requirements", description=get_general_req()))
 
-{get_general_req()}```""")
     elif cat is not None and cat != "general":
-        await ctx.send(f"""
-        ```ini
-[ {cat} Requirements ]
+        await ctx.send(discord.Embed(title=f"Requirements for {cat}", description=get_reqs(cat)))
 
-{get_reqs(cat)}```""")
     elif cat is None:
-        await ctx.send(f"""
-        ```ini
-[ General Requiements ]
 
-{get_general_req()}
+        with open(f"config\req.txt") as file:
+            await ctx.send(discord.Embed(title="All Requirements", description=file.read()))
 
-[ {cat} Requirements ]
 
-{get_reqs(cat)}```""")
 
-# Still working on them
-
-@bot.command(name="embed_colour", aliases=["emc", "ec", "colour", "embc"])
-async def embed_colour(ctx, embed_type=None):
-    if embed_type is None:
-        await ctx.send("""
-You need to give the name of the embed for which you want to change the colour of. Currently, you can set it for:
-1) dump_question_embed
-2) dump_req_embed
-3) dump_bl_embed
-4) confirmation_embed (confirmation or success same thing)
-5) fail_embed
-""")
 
 
 
@@ -1394,8 +1147,10 @@ You need to give the name of the embed for which you want to change the colour o
 @bot.command(name="set_prefix", aliases=['sp']) 
 @commands.is_owner()
 async def set_prefix(ctx, new_prefix):
+    bot.command_prefix = new_prefix
     with open(r"config\prefix.txt", "w") as file:
         file.write(new_prefix)
+
 
 @bot.command(nam="toggle")
 @commands.is_owner()
@@ -1439,7 +1194,7 @@ async def set_app_channel(ctx, error):
         error = error.original
 
     if isinstance(error, commands.errors.MissingRequiredArgument):
-        await ctx.send(f'Channel argument where?\nIt\'s configured as <#{get_applog()}> rn btw')
+        await ctx.send(f'Channel argument where?\nIt\'s configured as <#{get_app_log_channel()}> rn btw')
 
 @set_log_channel.error
 async def set_log_channel(ctx, error):
@@ -1447,7 +1202,7 @@ async def set_log_channel(ctx, error):
         error = error.original
 
     if isinstance(error, commands.errors.MissingRequiredArgument):
-        await ctx.send(f'Channel argument where?\nIt\'s configured as <#{get_log_channel()}> rn btw')
+        await ctx.send(f'Channel argument where?\nIt\'s configured as <#{get_reg_log_channel()}> rn btw')
 
 @add_question.error
 async def add_question(ctx, error):
@@ -1631,7 +1386,7 @@ async def apply(ctx, app):
 
 
         x = build_ans_embed(ctx.author, app)
-        alc = bot.get_channel(get_applog())
+        alc = bot.get_channel(get_app_log_channel())
         for a in x:
             alc.send(embed=a)
 
@@ -1663,12 +1418,12 @@ async def shutdown(ctx):
 @bot.command(name="version")
 async def version(ctx):
     await ctx.send(f"I am on version {get_version()} (counted since i first came to life).")
-    
+
 @bot.command(name="setguild")
 async def setguild(ctx, id):
     id = get_id_from_mention(id)
     with open(r"config\guild.txt", "w") as file:
-        file.write(id)
+        file.write(str(id))
     await ctx.send("done")
 
 bot.run(token)
