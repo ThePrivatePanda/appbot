@@ -1,5 +1,4 @@
 import asyncio, discord, os, sys
-from re import A
 from discord.errors import Forbidden, HTTPException, NotFound
 from discord.ext import commands
 from collections import Counter
@@ -990,7 +989,7 @@ async def dump_questions(ctx, cat=None):
 
 
 @bot.command(name="dump_blacklists", aliases=['blacklists', 'blacklisted'])
-async def dump_blacklist(ctx, role_or_user=None):
+async def dump_blacklists(ctx, role_or_user=None):
 
     with open(r"bl\rl_blacklists.txt") as file:
         ab = file.readlines()
